@@ -1,19 +1,19 @@
 // Übungen und Programm der Mobilitäts-App. Nur ruhige Bewegungen ohne Gewicht.
 // Dosen: reps = Wiederholungen, time = Sekunden. Zählt nicht als Krafttraining.
 export const EXERCISES = {
-  'biceps-curl': { name: 'Bizeps-Curl ohne Gewicht', cue: 'Ellbogen am Körper, Hände langsam zur Schulter beugen und senken.' },
-  'shoulder-press': { name: 'Schulterdrücken ohne Gewicht', cue: 'Hände auf Schulterhöhe, Arme langsam nach oben strecken. Auch im Sitzen.' },
-  'lateral-raise': { name: 'Seitheben ohne Gewicht', cue: 'Arme seitlich bis Schulterhöhe heben, langsam senken. Auch im Sitzen.' },
-  'chair-squat': { name: 'Kniebeuge auf den Stuhl', cue: 'Stuhl hinter dir, Gesäß nach hinten, kurz antippen, wieder aufstehen.', gear: 'Stuhl' },
-  'lunge': { name: 'Ausfallschritt', cue: 'Abwechselnd links und rechts nach hinten treten, bei Bedarf festhalten.' },
-  'crunch': { name: 'Crunch (Rumpfbeuge)', cue: 'Rückenlage, Knie gebeugt, Schultern langsam etwas anheben und senken.', gear: 'Matte' },
-  'hip-circles': { name: 'Hüftkreisen', cue: 'Hände in die Hüfte, große Kreise, Richtung nach der Hälfte wechseln.' },
-  'calf-raise': { name: 'Balanceboard-Wadenheben', cue: 'Auf dem Board, Hand an der Wand, langsam auf die Zehen und ab.', gear: 'Balanceboard' },
-  'triceps-back': { name: 'Trizeps nach hinten ohne Gewicht', cue: 'Oberkörper leicht vor, Arme gestreckt nach hinten führen, kurz halten.' },
-  'door-push-up': { name: 'Türrahmen-Push-up', cue: 'Hände am Türrahmen auf Brusthöhe, Körper gerade nach vorn kippen.', gear: 'Türrahmen' },
-  'wrist-curl': { name: 'Unterarm-Curl ohne Gewicht', cue: 'Unterarme auf den Oberschenkeln, Handflächen oben: Hände heben und senken.' },
-  'reverse-wrist-curl': { name: 'Umgekehrter Unterarm-Curl ohne Gewicht', cue: 'Wie Unterarm-Curl, Handrücken oben: Hände langsam heben und senken.' },
-  'front-raise': { name: 'Frontheben ohne Gewicht', cue: 'Arme gestreckt nach vorn bis Schulterhöhe heben, langsam senken.' }
+  'biceps-curl': { name: 'Bizeps-Curl ohne Gewicht', cue: 'Ellbogen am Körper, Hände langsam zur Schulter beugen und senken.', anim: 'dumbbell-curl' },
+  'shoulder-press': { name: 'Schulterdrücken ohne Gewicht', cue: 'Hände auf Schulterhöhe, Arme langsam nach oben strecken. Auch im Sitzen.', anim: 'shoulder-press-dumbbell' },
+  'lateral-raise': { name: 'Seitheben ohne Gewicht', cue: 'Arme seitlich bis Schulterhöhe heben, langsam senken. Auch im Sitzen.', anim: 'lateral-raise-dumbbell' },
+  'chair-squat': { name: 'Kniebeuge auf den Stuhl', cue: 'Stuhl hinter dir, Gesäß nach hinten, kurz antippen, wieder aufstehen.', gear: 'Stuhl', anim: 'chair-squat' },
+  'lunge': { name: 'Ausfallschritt', cue: 'Abwechselnd links und rechts nach hinten treten, bei Bedarf festhalten.', anim: 'dumbbell-reverse-lunge' },
+  'crunch': { name: 'Crunch (Rumpfbeuge)', cue: 'Rückenlage, Knie gebeugt, Schultern langsam etwas anheben und senken.', gear: 'Matte', anim: 'floor-crunch' },
+  'hip-circles': { name: 'Hüftkreisen', cue: 'Hände in die Hüfte, große Kreise, Richtung nach der Hälfte wechseln.', anim: 'hip-circles' },
+  'calf-raise': { name: 'Balanceboard-Wadenheben', cue: 'Auf dem Board, Hand an der Wand, langsam auf die Zehen und ab.', gear: 'Balanceboard', anim: 'balance-board-calf-raise' },
+  'triceps-back': { name: 'Trizeps nach hinten ohne Gewicht', cue: 'Oberkörper leicht vor, Arme gestreckt nach hinten führen, kurz halten.', anim: 'dumbbell-triceps-kickback' },
+  'door-push-up': { name: 'Türrahmen-Push-up', cue: 'Hände am Türrahmen auf Brusthöhe, Körper gerade nach vorn kippen.', gear: 'Türrahmen', anim: 'door-frame-push-up' },
+  'wrist-curl': { name: 'Unterarm-Curl ohne Gewicht', cue: 'Unterarme auf den Oberschenkeln, Handflächen oben: Hände heben und senken.', anim: 'wrist-curl' },
+  'reverse-wrist-curl': { name: 'Umgekehrter Unterarm-Curl ohne Gewicht', cue: 'Wie Unterarm-Curl, Handrücken oben: Hände langsam heben und senken.', anim: 'reverse-wrist-curl' },
+  'front-raise': { name: 'Frontheben ohne Gewicht', cue: 'Arme gestreckt nach vorn bis Schulterhöhe heben, langsam senken.', anim: 'dumbbell-front-raise' }
 };
 
 const R = (ref, reps = 20) => ({ ref, dose: { mode: 'reps', reps } });

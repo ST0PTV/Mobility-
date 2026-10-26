@@ -1,0 +1,114 @@
+/* Animation und Sheets – aus dem Workout Tracker (css/glass.css) übernommen; nur die Regeln für .anim-*, .an-*, .ab-* und .sheet*.
+   Farben der Figur und der Bühne als Tokens, Hell/Dunkel nach System. */
+:root {
+  --sheet-bg: #F2F2F7; --sheet-surface: #FFFFFF; --sheet-surface-2: #E9E9EE;
+  --fig-base: #D5D9DE; --fig-body: #FFFFFF; --fig-rest: #E6E9ED; --fig-edge: #9AA0A8; --fig-gap: #FFFFFF; --stage-bg: #F2F2F7;
+  --warn: #C77700; --faint: #8E8E93;
+  --sec: color-mix(in srgb, var(--accent) 40%, var(--fig-body));
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --sheet-bg: #1C1C1E; --sheet-surface: #2C2C2E; --sheet-surface-2: #3A3A3C;
+    --fig-base: #3A3F45; --fig-body: #30353B; --fig-rest: #3C4249; --fig-edge: #7C838C; --fig-gap: #000000; --stage-bg: #000000;
+    --warn: #FF9F0A;
+  }
+}
+.sheet { --surface: var(--sheet-surface); }
+.info p { margin: 8px 0; }
+.info h3, .info h4 { margin: 14px 0 4px; }
+.info .small, .info small { font-size: 16px; }
+details.more > summary { cursor: pointer; padding: 10px 0; font-weight: 600; min-height: 44px; }
+.icon { vertical-align: -3px; }
+.plain { appearance: none; border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.seg { display: flex; gap: 4px; background: var(--fill); border-radius: 12px; padding: 3px; }
+.seg button { flex: 1; border: 0; border-radius: 9px; background: none; color: var(--text); font: inherit; cursor: pointer; }
+.seg button.on { background: var(--surface); font-weight: 600; }
+.inline { display: inline-block; }
+
+.anim-card { margin: 0 0 14px; }
+.anim-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 8px; flex-wrap: wrap; }
+.anim-badge { display: inline-flex; align-items: center; gap: 2px; border: 1px solid color-mix(in srgb, var(--accent) 50%, transparent); background: color-mix(in srgb, var(--accent) 14%, transparent); color: var(--accent);
+  border-radius: 999px; padding: 4px 10px; font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit; min-height: 30px; }
+.anim-badge.protocol { border-color: color-mix(in srgb, var(--warn) 50%, transparent); background: color-mix(in srgb, var(--warn) 14%, transparent); color: var(--warn); }
+.anim-badge.transfer { border-color: color-mix(in srgb, var(--muted) 50%, transparent); background: color-mix(in srgb, var(--muted) 14%, transparent); color: var(--muted); }
+.anim-badge.convention { border-color: color-mix(in srgb, var(--muted) 45%, transparent); background: transparent; color: var(--muted); border-style: dashed; }
+.anim-seg { flex: 1; min-width: 180px; max-width: 240px; }
+.anim-seg button { min-height: 34px; font-size: 13px; }
+.anim-stage { position: relative; border-radius: 22px; background: color-mix(in srgb, var(--text) 7%, transparent); border: 1px solid var(--line); padding: 6px 6px 90px; display: flex; justify-content: center; cursor: pointer; }
+.anim-svg { width: 100%; height: auto; max-height: 380px; display: block; }
+.an-floor { stroke: var(--fig-edge); stroke-opacity: 0.35; stroke-width: 2; }
+.an-body.edge { fill: var(--fig-body); stroke: var(--fig-edge); stroke-width: 2.2; stroke-linejoin: round; }
+.an-body.fill { fill: var(--fig-body); }
+.an-body.far.edge, .an-body.far.fill { fill: color-mix(in srgb, var(--fig-body) 70%, var(--stage-bg)); stroke-opacity: 0.5; }
+.an-ear { fill: var(--fig-body); stroke: var(--fig-edge); stroke-opacity: 0.6; stroke-width: 1; }
+.an-soft { fill: var(--fig-body); stroke: var(--fig-edge); stroke-opacity: 0.4; stroke-width: 1.1; stroke-linejoin: round; } /* v2.5.0: Weichteil (Brust), kein Muskel */
+.an-m { stroke: var(--fig-edge); stroke-opacity: 0.45; stroke-width: 0.9; stroke-linejoin: round; }
+.an-m.rest { fill: var(--fig-rest); }
+.an-m.prim { fill: var(--accent); }
+.an-m.sec { fill: var(--sec); }
+.an-m.far { opacity: 0.6; }
+.an-plate { fill: color-mix(in srgb, var(--text) 6%, transparent); stroke: var(--text); stroke-width: 2.4; }
+.an-barend { fill: var(--text); }
+.an-db { fill: color-mix(in srgb, var(--text) 10%, transparent); stroke: var(--text); stroke-width: 2; stroke-linejoin: round; }
+.an-gear { fill: color-mix(in srgb, var(--text) 9%, var(--stage-bg)); stroke: none; }
+.an-gear-line { stroke: color-mix(in srgb, var(--text) 22%, var(--stage-bg)); stroke-linecap: round; }
+.an-gear-line.dash { stroke-dasharray: 5 5; }
+.an-mark { opacity: 0.55; transition: opacity 0.35s; cursor: pointer; }
+.an-mark.on { opacity: 1; }
+.an-lead { fill: none; stroke: var(--faint); stroke-width: 1.3; }
+.an-dot { fill: var(--muted); }
+.an-pill { fill: var(--surface); stroke: var(--line); stroke-width: 1; }
+.an-mark.on .an-lead { stroke: var(--text); }
+.an-mark.on .an-dot { fill: var(--text); }
+.an-mark.on .an-pill { fill: var(--text); stroke: none; }
+.an-mark.on .an-label { fill: var(--bg); }
+.an-label { fill: var(--muted); font-weight: 600; font-family: inherit; }
+/* v2.7.0: Steuerkapsel in der Karte (Abspielen, Phasenleiste, Tempo) */
+.ab-capsule { position: absolute; left: 10px; right: 10px; bottom: 10px; height: 72px; box-sizing: border-box; display: flex; align-items: center; gap: 10px; padding: 0 8px; cursor: default;
+  border-radius: 24px; background: color-mix(in srgb, var(--bg) 80%, transparent); border: 1px solid color-mix(in srgb, var(--text) 16%, transparent); box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35); }
+.ab-play { flex: none; width: 48px; height: 48px; border-radius: 50%; border: 0; display: inline-flex; align-items: center; justify-content: center; cursor: pointer;
+  background: var(--accent); color: var(--on-accent); }
+.ab-bar { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.ab-trackrow { position: relative; height: 34px; }
+.ab-track { position: absolute; left: 0; right: 0; top: 15px; height: 5px; display: flex; border-radius: 3px; overflow: hidden; background: color-mix(in srgb, var(--text) 18%, transparent); }
+.ab-seg { position: relative; }
+.ab-seg i { display: block; height: 5px; width: 0; background: var(--accent); }
+.ab-seg + .ab-seg::before { content: ''; position: absolute; left: -1px; top: 0; width: 3px; height: 5px; background: color-mix(in srgb, var(--bg) 95%, transparent); z-index: 1; } /* Trennstrich statt Lücke: Position bleibt linear zur Zeit */
+.ab-thumb { position: absolute; top: 6px; width: 22px; height: 22px; margin-left: -11px; border-radius: 50%; background: var(--text); box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5); pointer-events: none; }
+.ab-range { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; touch-action: none; }
+.ab-labels { position: relative; height: 28px; margin-top: -4px; }
+.ab-label { position: absolute; top: 0; transform: translateX(-50%); min-height: 28px; padding: 0 2px; border: 0; background: none; color: var(--muted); font: inherit; font-size: 12px; white-space: nowrap; cursor: pointer; }
+.ab-label.on { color: var(--text); font-weight: 700; }
+.ab-speed { flex: none; min-width: 44px; height: 36px; padding: 0 6px; border-radius: 999px; border: 1px solid color-mix(in srgb, var(--text) 20%, transparent); background: color-mix(in srgb, var(--text) 8%, transparent); color: var(--text); font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
+.ab-speed.on { border-color: color-mix(in srgb, var(--accent) 60%, transparent); background: color-mix(in srgb, var(--accent) 20%, transparent); }
+.anim-kps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.anim-kp .plain { display: flex; align-items: flex-start; gap: 10px; width: 100%; text-align: left; background: none; border: 0; color: var(--muted); font: inherit; font-size: 15px; line-height: 1.35;
+  padding: 7px 10px; border-radius: 12px; transition: background 0.35s, color 0.35s; cursor: pointer; }
+.anim-kp.on .plain { color: var(--text); background: color-mix(in srgb, var(--accent) 12%, transparent); }
+.anim-kp .n { flex: none; width: 22px; height: 22px; border-radius: 50%; border: 1px solid color-mix(in srgb, var(--accent) 50%, transparent); color: var(--accent); font-size: 12px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; margin-top: 1px; }
+.anim-kp .t { flex: 1; }
+.anim-kp .tag { font-style: normal; font-size: 11px; color: var(--warn); margin-left: 6px; text-transform: uppercase; letter-spacing: 0.06em; }
+.anim-kp .info-mark { color: var(--muted); margin-top: 3px; }
+.anim-status { display: inline-block; border-radius: 999px; padding: 3px 10px; font-size: 12px; font-weight: 600; background: color-mix(in srgb, var(--accent) 14%, transparent); color: var(--accent); }
+.anim-status.contested { background: color-mix(in srgb, var(--warn) 14%, transparent); color: var(--warn); }
+.anim-status.single { background: color-mix(in srgb, var(--muted) 14%, transparent); color: var(--muted); }
+.info h4 { margin: 12px 0 4px; font-size: 14px; }
+@media (prefers-reduced-motion: reduce) { .an-mark, .anim-kp .plain { transition: none; } }
+body.sheet-open { overflow: hidden; }
+.sheet-overlay { position: fixed; inset: 0; z-index: 30; background: rgba(0, 0, 0, 0.5); }
+.sheet { position: fixed; z-index: 31; left: 0; right: 0; bottom: 0; margin: 0 auto; max-width: 640px; max-height: 88vh;
+  display: flex; flex-direction: column; border-radius: 26px 26px 0 0; background: var(--sheet-bg);
+  border-top: 1px solid var(--line); transform: translateY(100%); transition: transform 0.22s ease-out;
+  padding-bottom: var(--safe-bottom); }
+.sheet.full { height: 92vh; max-height: 92vh; }
+.sheet.in { transform: translateY(0); }
+.sheet-grab { width: 44px; height: 5px; border-radius: 3px; background: color-mix(in srgb, var(--text) 30%, transparent); margin: 10px auto 4px; cursor: pointer; flex: none; }
+.sheet-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 4px 16px 8px; flex: none; }
+.sheet-head h2 { margin: 0; font-size: 20px; }
+.sheet-close { width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--line); background: var(--fill); cursor: pointer; flex: none; }
+.sheet-body { overflow-y: auto; padding: 4px 16px 20px; -webkit-overflow-scrolling: touch; flex: 1; }
+.opt { display: flex; gap: 12px; align-items: center; width: 100%; padding: 14px; margin-bottom: 10px; text-align: left; cursor: pointer;
+.sheet { left: 8px; right: 8px; bottom: calc(8px + var(--safe-bottom)); max-width: 624px; max-height: calc(100% - var(--safe-top) - var(--safe-bottom) - 48px);
+  border-radius: 38px; background: var(--sheet-bg); border-top: 0; padding-bottom: 8px; box-shadow: 0 -8px 40px rgba(0, 0, 0, 0.3);
+  transform: translateY(calc(100% + 80px)); }
+.sheet.full { height: calc(100% - var(--safe-top) - var(--safe-bottom) - 48px); max-height: none; }

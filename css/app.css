@@ -63,3 +63,15 @@ p { margin: 8px 0; }
   background: var(--accent); color: var(--on-accent); padding: 14px 20px; border-radius: 16px; font-size: 17px; max-width: 90%; transition: opacity .2s, transform .2s; }
 .toast.show { opacity: 1; transform: translate(-50%, 0); }
 @media (prefers-reduced-motion: reduce) { .bar-in, .toast { transition: none; } }
+.run-anim { margin-top: 14px; text-align: left; }
+.run-anim .anim-card { margin: 0; }
+.run-anim .anim-kps { font-size: 17px; }
+.icon { fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+/* Zurück/Weiter bleiben beim Scrollen unten sichtbar (die Animation macht die Seite länger) */
+.runner .btn-row { position: sticky; bottom: 0; z-index: 5; margin: 8px -16px 0; padding: 10px 16px calc(var(--safe-bottom) + 10px); background: var(--bg); box-shadow: 0 -1px 0 var(--line); }
+.run-dose { font-size: 56px; }
+.run-card { padding: 16px 14px; }
+.run-card h2 { font-size: 24px; margin-bottom: 2px; }
+.run-card > .muted { font-size: 18px; margin: 4px 0; }
+.run-dose { font-size: 44px; margin: 4px 0 2px; }
+.run-anim .anim-stage { margin-top: 8px; }

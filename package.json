@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "check": "node --check js/app.js && node --check js/data.js && node --check js/routine.js && node --check js/store.js && node --check sw.js",
+    "check": "node --check js/anim-bar.js && node --check js/anim-data.js && node --check js/anim-view.js && node --check js/app.js && node --check js/data.js && node --check js/icons.js && node --check js/motion-female.js && node --check js/motion-front.js && node --check js/motion.js && node --check js/pool-shim.js && node --check js/routine.js && node --check js/sheet.js && node --check js/store.js && node --check js/util.js && node --check sw.js && node --check tools/sync-anim.mjs",
     "test": "node tests/routine.test.js"
   }
 }
