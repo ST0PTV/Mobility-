@@ -1,12 +1,9 @@
-/* Mobilität – große Schrift und große Tasten (Fließtext 20 px, Tasten ab 64 px), Hell/Dunkel nach System. */
+/* Mobilität – große Schrift und große Tasten (Fließtext 20 px, Tasten ab 64 px), immer dunkel. */
 :root {
-  color-scheme: light dark;
-  --bg: #F2F2F7; --surface: #FFFFFF; --line: #D1D1D6; --text: #111315; --muted: #5C5C62;
-  --accent: #111315; --on-accent: #FFFFFF; --fill: #E5E5EA;
+  color-scheme: dark;
+  --bg: #000000; --surface: #1C1C1E; --line: #38383A; --text: #FFFFFF; --muted: #AEAEB2;
+  --accent: #ECEEF0; --on-accent: #111315; --fill: #2C2C2E;
   --safe-top: env(safe-area-inset-top, 0px); --safe-bottom: env(safe-area-inset-bottom, 0px);
-}
-@media (prefers-color-scheme: dark) {
-  :root { --bg: #000000; --surface: #1C1C1E; --line: #38383A; --text: #FFFFFF; --muted: #AEAEB2; --accent: #ECEEF0; --on-accent: #111315; --fill: #2C2C2E; }
 }
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 /* Kein Zoomen per Doppeltipp; Zoomen nur mit zwei Fingern (Pinch) */
@@ -24,6 +21,8 @@ p { margin: 8px 0; }
 .card.list { padding: 4px 18px; }
 .row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 0; min-height: 56px; }
 .row + .row { border-top: 1px solid var(--line); }
+button.row { appearance: none; border: 0; background: none; color: inherit; font: inherit; text-align: left; width: 100%; cursor: pointer; }
+button.row .chev { color: var(--muted); margin-left: 6px; }
 .row .t { flex: 1; min-width: 0; }
 .hints p { margin: 10px 0; }
 .gear { margin: 12px 4px; }

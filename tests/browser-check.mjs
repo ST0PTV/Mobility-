@@ -1,4 +1,4 @@
-// Browser-Check (Playwright): Startseite, Pause in der Leiste (gemerkt), Ablauf mit Pausen-Leiste, Zeitübung, Ende; Hell und Dunkel; keine Konsolenfehler.
+// Browser-Check (Playwright): Startseite, Pause in der Leiste (gemerkt), Ablauf mit Pausen-Leiste, Zeitübung, Ende; System hell und dunkel (App immer dunkel); keine Konsolenfehler.
 // Aufruf: node tests/browser-check.mjs [Ordner für Screenshots]
 import { createRequire } from 'node:module';
 // Keine Abhängigkeit im Repo: Playwright wird in der Umgebung gesucht (PLAYWRIGHT_MODULE = Ordner des Pakets).
@@ -41,6 +41,17 @@ for (const scheme of ['dark', 'light']) {
   ok(!/≈|Schätzung|object HTML|undefined|NaN/.test(t), `${scheme}: keine ≈, Schätzung oder undefined`);
   ok(/Übungen/.test(t) && /Bizeps-Curl/.test(t) && /Hüftkreisen/.test(t), `${scheme}: Übersicht der Übungen bleibt`);
   if (shots) await p.screenshot({ path: `${shots}/mob-${scheme}-home.png` });
+  // 1.3.4: App immer dunkel, auch bei hellem System
+  ok(await p.evaluate(() => getComputedStyle(document.body).backgroundColor === 'rgb(0, 0, 0)' && getComputedStyle(document.querySelector('.card')).backgroundColor === 'rgb(28, 28, 30)'), `${scheme}: App ist dunkel (System ${scheme})`);
+  // 1.3.4: Technik direkt aus der Liste der Startseite
+  await p.getByRole('button', { name: /^Hüftkreisen, Technik ansehen/ }).click(); await p.waitForTimeout(250);
+  const ex = await p.evaluate(() => ({ t: document.getElementById('view').innerText, svg: document.querySelectorAll('.anim-svg').length, kps: document.querySelectorAll('.anim-kp').length, hash: location.hash }));
+  ok(ex.hash === '#/ex/6' && /Übung 7 von 13/.test(ex.t) && /Hüftkreisen/.test(ex.t) && ex.svg === 1 && ex.kps >= 2, `${scheme}: Tipp auf eine Übung der Liste zeigt Technik-Animation und Kernpunkte`);
+  if (shots) await p.screenshot({ path: `${shots}/mob-${scheme}-tech.png` });
+  await p.getByRole('button', { name: 'Nächste' }).click(); await p.waitForTimeout(200);
+  ok(/Übung 8 von 13/.test(await txt()) && /Balanceboard/.test(await txt()), `${scheme}: „Nächste“ zeigt die folgende Übung`);
+  await p.getByRole('button', { name: 'Zur Übersicht' }).click(); await p.waitForTimeout(200);
+  ok(/Mobilitätsprogramm/.test(await txt()) && await p.evaluate(() => document.querySelectorAll('.anim-svg').length === 0), `${scheme}: „Zur Übersicht“ führt zur Startseite zurück`);
   ok(!/Mittelwerte aus kleinen Studien/.test(t), `${scheme}: keine Studien-Texte`);
   // 1.3.3: keine Pausen-Einstellung auf der Startseite; die App merkt sich die in der Pausen-Leiste eingestellte Zeit
   ok(!/Pause|−|\+/.test(t) && await p.getByRole('button', { name: /Pause (kürzer|länger)/ }).count() === 0, `${scheme}: keine Pausen-Einstellung auf der Startseite`);

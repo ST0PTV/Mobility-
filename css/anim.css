@@ -1,17 +1,10 @@
 /* Animation und Sheets – aus dem Workout Tracker (css/glass.css) übernommen; nur die Regeln für .anim-*, .an-*, .ab-* und .sheet*.
-   Farben der Figur und der Bühne als Tokens, Hell/Dunkel nach System. */
+   Farben der Figur und der Bühne als Tokens, immer dunkel. */
 :root {
-  --sheet-bg: #F2F2F7; --sheet-surface: #FFFFFF; --sheet-surface-2: #E9E9EE;
-  --fig-base: #D5D9DE; --fig-body: #FFFFFF; --fig-rest: #E6E9ED; --fig-edge: #9AA0A8; --fig-gap: #FFFFFF; --stage-bg: #F2F2F7;
-  --warn: #C77700; --faint: #8E8E93;
+  --sheet-bg: #1C1C1E; --sheet-surface: #2C2C2E; --sheet-surface-2: #3A3A3C;
+  --fig-base: #3A3F45; --fig-body: #30353B; --fig-rest: #3C4249; --fig-edge: #7C838C; --fig-gap: #000000; --stage-bg: #000000;
+  --warn: #FF9F0A; --faint: #8E8E93;
   --sec: color-mix(in srgb, var(--accent) 40%, var(--fig-body));
-}
-@media (prefers-color-scheme: dark) {
-  :root {
-    --sheet-bg: #1C1C1E; --sheet-surface: #2C2C2E; --sheet-surface-2: #3A3A3C;
-    --fig-base: #3A3F45; --fig-body: #30353B; --fig-rest: #3C4249; --fig-edge: #7C838C; --fig-gap: #000000; --stage-bg: #000000;
-    --warn: #FF9F0A;
-  }
 }
 .sheet { --surface: var(--sheet-surface); }
 .info p { margin: 8px 0; }

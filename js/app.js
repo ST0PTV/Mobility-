@@ -49,9 +49,29 @@ function homeView() {
       h('p', { class: 'muted' }, `${program.length} Übungen`),
       h('button', { class: 'btn primary block', type: 'button', onclick: () => startRun(program, getRest()) }, 'Starten')),
     h('div', { class: 'sec' }, 'Übungen'),
-    h('div', { class: 'card list' }, program.map(resolve).map((x) => h('div', { class: 'row' }, h('span', { class: 't' }, x.name), h('b', {}, doseText(x.dose))))),
+    h('div', { class: 'card list' }, program.map(resolve).map((x, i) => h('button', { class: 'row', type: 'button', 'aria-label': `${x.name}, Technik ansehen`, onclick: () => { location.hash = `#/ex/${i}`; } }, h('span', { class: 't' }, x.name), h('b', {}, doseText(x.dose)), h('span', { class: 'chev', 'aria-hidden': 'true' }, '›')))),
     h('div', { class: 'sec' }, 'Hinweise'),
     h('div', { class: 'card hints' }, HINTS.map((t) => h('p', {}, t))));
+}
+
+// ---------- Technik einer Übung (aus der Liste der Startseite) ----------
+function exerciseView(i) {
+  const list = PROGRAM.map(resolve).filter(Boolean);
+  const x = list[i];
+  if (!x) { setTimeout(() => { location.hash = '#/'; }, 0); return h('section', {}); }
+  const go2 = (n) => () => { location.hash = `#/ex/${n}`; };
+  return h('section', { class: 'runner' },
+    h('div', { class: 'run-top' },
+      h('button', { class: 'btn small', type: 'button', onclick: () => { location.hash = '#/'; } }, 'Zur Übersicht'),
+      h('span', { class: 'muted' }, `Übung ${i + 1} von ${list.length}`)),
+    h('div', { class: 'card run-card' },
+      h('h2', {}, x.name),
+      h('p', { class: 'muted' }, x.cue),
+      h('p', { class: 'run-dose' }, doseText(x.dose)),
+      animBlock(x)),
+    h('div', { class: 'btn-row' },
+      h('button', { class: 'btn', type: 'button', disabled: i === 0, onclick: go2(i - 1) }, 'Zurück'),
+      h('button', { class: 'btn', type: 'button', disabled: i === list.length - 1, onclick: go2(i + 1) }, 'Nächste')));
 }
 
 // ---------- Ablauf ----------
@@ -221,10 +241,12 @@ function runView() {
 
 // ---------- Router ----------
 function render() {
-  if (location.hash !== '#/run') stopAnim();
-  const node = location.hash === '#/run' ? runView() : homeView();
+  stopAnim();
+  const m = /^#\/ex\/(\d+)$/.exec(location.hash);
+  const onRun = location.hash === '#/run';
+  const node = onRun ? runView() : m ? exerciseView(Number(m[1])) : homeView();
   view.replaceChildren(node);
-  if (!(location.hash === '#/run')) view.scrollTop = 0;
+  if (!onRun) view.scrollTop = 0;
 }
 window.addEventListener('hashchange', render);
 render();
