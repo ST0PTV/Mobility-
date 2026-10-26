@@ -1,4 +1,4 @@
-// Browser-Check (Playwright): Startseite, Pause wählen, Ablauf mit Pausen-Leiste, Zeitübung, Ende; Hell und Dunkel; keine Konsolenfehler.
+// Browser-Check (Playwright): Startseite, Pause in der Leiste (gemerkt), Ablauf mit Pausen-Leiste, Zeitübung, Ende; Hell und Dunkel; keine Konsolenfehler.
 // Aufruf: node tests/browser-check.mjs [Ordner für Screenshots]
 import { createRequire } from 'node:module';
 // Keine Abhängigkeit im Repo: Playwright wird in der Umgebung gesucht (PLAYWRIGHT_MODULE = Ordner des Pakets).
@@ -34,25 +34,17 @@ for (const scheme of ['dark', 'light']) {
   await p.goto(url); await p.waitForTimeout(300);
   const txt = () => p.evaluate(() => document.getElementById('view').innerText);
   let t = await txt();
-  ok(/Mobilitätsprogramm/.test(t) && /13 Übungen/.test(t) && /10 s/.test(t) && /Starten/.test(t), `${scheme}: Startseite mit Titel, 13 Übungen, Pause 10 s und Starten`);
+  ok(/Mobilitätsprogramm/.test(t) && /13 Übungen/.test(t) && /Starten/.test(t), `${scheme}: Startseite mit Titel, 13 Übungen und Starten`);
+  ok(await p.evaluate(() => ['body', '.btn', '.view'].every((q) => getComputedStyle(document.querySelector(q)).touchAction === 'manipulation')), `${scheme}: kein Doppeltipp-Zoom (touch-action: manipulation), Pinch bleibt möglich`);
   // 1.3.2: Karte nur noch Titel, Anzahl, Pause −/+ und Starten (Nutzer); Hilfetexte, Geräteliste, Gesamtzeit und „Zurück auf“ entfernt
   ok(!/rund \d+ min|ohne Gewicht ·|Du brauchst|Wiederholungen bleiben gleich|Zurück auf/.test(t), `${scheme}: keine Zusatztexte auf der Startseite`);
   ok(!/≈|Schätzung|object HTML|undefined|NaN/.test(t), `${scheme}: keine ≈, Schätzung oder undefined`);
   ok(/Übungen/.test(t) && /Bizeps-Curl/.test(t) && /Hüftkreisen/.test(t), `${scheme}: Übersicht der Übungen bleibt`);
   if (shots) await p.screenshot({ path: `${shots}/mob-${scheme}-home.png` });
   ok(!/Mittelwerte aus kleinen Studien/.test(t), `${scheme}: keine Studien-Texte`);
-  await p.getByRole('button', { name: 'Pause länger' }).click();
-  t = await txt();
-  ok(/15 s/.test(t) && /20×/.test(t) && !/2[1-9]×|[3-9]\d×/.test(t), `${scheme}: + ergibt 15 s, Wiederholungen bleiben 20`);
-  for (let i = 0; i < 10; i++) await p.getByRole('button', { name: 'Pause länger' }).click();
-  ok(/1 min 15 s/.test(await txt()), `${scheme}: 15 s + 10 Schritte = 1 min 15 s (5-s-Schritte bis 60 s, dann 15 s)`);
-  await p.reload(); await p.waitForTimeout(200);
-  ok(/1 min 15 s/.test(await txt()), `${scheme}: Pause bleibt nach Neuladen`);
-  for (let i = 0; i < 11; i++) await p.getByRole('button', { name: 'Pause kürzer' }).click();
-  ok(/10 s/.test(await txt()), `${scheme}: mit − zurück auf 10 s`);
-  for (let i = 0; i < 2; i++) await p.getByRole('button', { name: 'Pause kürzer' }).click();
-  ok(/keine/.test(await txt()) && await p.getByRole('button', { name: 'Pause kürzer' }).isDisabled(), `${scheme}: 0 s = keine Pause, kürzer nicht möglich`);
-  for (let i = 0; i < 2; i++) await p.getByRole('button', { name: 'Pause länger' }).click();
+  // 1.3.3: keine Pausen-Einstellung auf der Startseite; die App merkt sich die in der Pausen-Leiste eingestellte Zeit
+  ok(!/Pause|−|\+/.test(t) && await p.getByRole('button', { name: /Pause (kürzer|länger)/ }).count() === 0, `${scheme}: keine Pausen-Einstellung auf der Startseite`);
+  ok(/20×/.test(t) && !/2[1-9]×|[3-9]\d×/.test(t), `${scheme}: Wiederholungen bleiben 20`);
   await p.getByRole('button', { name: 'Starten' }).click(); await p.waitForTimeout(250);
   t = await txt();
   ok(/Übung 1 von 13/.test(t) && /Bizeps-Curl/.test(t) && /20×/.test(t) && !/Als Nächstes/.test(t), `${scheme}: Ablauf startet mit Bizeps-Curl 20×, ohne Pausen-Leiste`);
@@ -65,6 +57,8 @@ for (const scheme of ['dark', 'light']) {
   if (shots) await p.screenshot({ path: `${shots}/mob-${scheme}-rest.png` });
   await p.getByRole('button', { name: 'Pause 15 Sekunden länger' }).click();
   ok(/0:(2[0-5])/.test(await p.evaluate(() => document.querySelector('.rt-time').textContent)), `${scheme}: +15 verlängert die Pause (10 → 25 s)`);
+  await p.getByRole('button', { name: 'Pause 15 Sekunden kürzer' }).click();
+  ok(/0:(1[0-5])/.test(await p.evaluate(() => document.querySelector('.rt-time').textContent)), `${scheme}: −15 verkürzt wieder (25 → 10 s)`);
   await p.getByRole('button', { name: 'Pause beenden' }).click();
   ok(await p.evaluate(() => !document.querySelector('.restbar')), `${scheme}: Schließen entfernt die Pausen-Leiste`);
   for (let i = 0; i < 5; i++) await p.getByRole('button', { name: 'Weiter', exact: true }).click();
@@ -86,6 +80,19 @@ for (const scheme of ['dark', 'light']) {
   if (shots) await p.screenshot({ path: `${shots}/mob-${scheme}-done.png` });
   await p.getByRole('button', { name: 'Fertig' }).click(); await p.waitForTimeout(250);
   ok(/Mobilitätsprogramm/.test(await txt()), `${scheme}: zurück zur Startseite`);
+  // gemerkte Pause: in der Leiste +15 → beim nächsten Start (auch nach Neuladen) läuft die Pause mit 25 s; Schließen ändert den Wert nicht
+  await p.getByRole('button', { name: 'Starten' }).click(); await p.waitForTimeout(250);
+  await p.getByRole('button', { name: 'Weiter', exact: true }).click(); await p.waitForTimeout(250);
+  await p.getByRole('button', { name: 'Pause 15 Sekunden länger' }).click();
+  await p.getByRole('button', { name: 'Pause beenden' }).click();
+  await p.getByRole('button', { name: 'Weiter', exact: true }).click(); await p.waitForTimeout(250);
+  ok(/0:2[0-5]/.test(await p.evaluate(() => document.querySelector('.rt-time').textContent)), `${scheme}: weitere Pausen im selben Ablauf nutzen die gemerkte Zeit (25 s)`);
+  await p.reload(); await p.waitForTimeout(250);
+  await p.getByRole('button', { name: 'Starten' }).click(); await p.waitForTimeout(250);
+  await p.getByRole('button', { name: 'Weiter', exact: true }).click(); await p.waitForTimeout(250);
+  ok(/0:2[0-5]/.test(await p.evaluate(() => document.querySelector('.rt-time').textContent)), `${scheme}: gemerkte Pause gilt beim nächsten Start nach Neuladen (25 s)`);
+  await p.getByRole('button', { name: 'Pause 15 Sekunden kürzer' }).click();
+  await p.reload(); await p.waitForTimeout(250);
   // Animationen: jede Übung mit Animation zeigt Figur und Kernpunkte (ohne Gewichte), die anderen nur Text.
   await p.getByRole('button', { name: 'Starten' }).click(); await p.waitForTimeout(250);
   const seen = [];

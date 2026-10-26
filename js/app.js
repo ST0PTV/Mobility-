@@ -1,6 +1,6 @@
 // Mobilitäts-App: Startseite (Dauer einstellen, Übungen ansehen) und Ablauf (eine Übung pro Bildschirm).
 import { PROGRAM, HINTS } from './data.js';
-import { nextRest, fmtRest, steps, remainingSeconds, fmtClock, doseText, resolve, MAX_REST, REST_ADJUST } from './routine.js';
+import { steps, remainingSeconds, fmtClock, doseText, resolve, MIN_REST, MAX_REST, REST_ADJUST } from './routine.js';
 import { getRest, setRest } from './store.js';
 import { animationCard } from './anim-view.js';
 
@@ -41,22 +41,13 @@ document.addEventListener('visibilitychange', () => { if (run && document.visibi
 
 // ---------- Startseite ----------
 function homeView() {
-  const rest = getRest();
   const program = PROGRAM;
-  const stepBtn = (delta, label) => h('button', { class: 'btn round', type: 'button', 'aria-label': label,
-    disabled: delta < 0 ? rest <= 0 : rest >= MAX_REST,
-    onclick: () => { setRest(nextRest(rest, delta)); render(); } }, delta < 0 ? '−' : '+');
   return h('section', {},
     h('h1', {}, 'Mobilität'),
     h('div', { class: 'card' },
       h('h2', {}, 'Mobilitätsprogramm'),
       h('p', { class: 'muted' }, `${program.length} Übungen`),
-      h('div', { class: 'dur', role: 'group', 'aria-label': 'Pause zwischen den Übungen' },
-        h('span', { class: 'dur-label' }, 'Pause'),
-        stepBtn(-1, 'Pause kürzer'),
-        h('b', { class: 'dur-value', 'aria-live': 'polite' }, fmtRest(rest)),
-        stepBtn(1, 'Pause länger')),
-      h('button', { class: 'btn primary block', type: 'button', onclick: () => startRun(program, rest) }, 'Starten')),
+      h('button', { class: 'btn primary block', type: 'button', onclick: () => startRun(program, getRest()) }, 'Starten')),
     h('div', { class: 'sec' }, 'Übungen'),
     h('div', { class: 'card list' }, program.map(resolve).map((x) => h('div', { class: 'row' }, h('span', { class: 't' }, x.name), h('b', {}, doseText(x.dose))))),
     h('div', { class: 'sec' }, 'Hinweise'),
@@ -135,6 +126,10 @@ function restBar(st, onClose) {
   svg.innerHTML = `<circle cx="27" cy="27" r="23" class="rt-ring-bg"/><circle cx="27" cy="27" r="23" class="rt-ring-fg" stroke-dasharray="${RING_LEN}" stroke-dashoffset="${RING_LEN}" transform="rotate(-90 27 27)"/>`;
   const adjust = (sign) => () => {
     run.rest.seconds = Math.max(0, run.rest.seconds + sign * REST_ADJUST);
+    // Die App merkt sich die eingestellte Zeit: gilt für die weiteren Pausen dieses Ablaufs und für den nächsten Start.
+    const kept = Math.max(MIN_REST, Math.min(MAX_REST, run.rest.seconds));
+    setRest(kept);
+    run.steps.forEach((x, i) => { if (i > run.index) x.restBefore = kept; });
     draw();
   };
   const time = h('b', { class: 'rt-time' });

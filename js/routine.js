@@ -4,6 +4,7 @@ import { EXERCISES } from './data.js';
 // Konventionen für die Zeitangabe (keine Messwerte): 3 s pro Wiederholung. Die Wiederholungen bleiben fest;
 // die Pause zwischen den Übungen wählt der Nutzer frei (0 bis 180 s), die Gesamtzeit ergibt sich daraus.
 export const REP_SECONDS = 3;
+export const MIN_REST = 10;     // kürzeste gemerkte Pause (damit die Pausen-Leiste immer erscheint)
 export const MAX_REST = 180;    // längste Pause
 export const REST_ADJUST = 15;  // Schritt der Tasten −/+ während der Pause (wie in der Haupt-App)
 
