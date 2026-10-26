@@ -1,6 +1,6 @@
 // Mobilitäts-App: Startseite (Dauer einstellen, Übungen ansehen) und Ablauf (eine Übung pro Bildschirm).
 import { PROGRAM, BASE_MINUTES, HINTS } from './data.js';
-import { scale, nextMinutes, steps, remainingSeconds, fmtClock, doseText, gearList, resolve, MINUTES } from './routine.js';
+import { nextMinutes, minuteRange, restSeconds, steps, remainingSeconds, fmtClock, doseText, gearList, resolve } from './routine.js';
 import { getMinutes, setMinutes } from './store.js';
 
 const view = document.getElementById('view');
@@ -25,7 +25,6 @@ function toast(text) {
   toast.t = setTimeout(() => toastEl.classList.remove('show'), 2400);
 }
 
-const currentProgram = () => scale(PROGRAM, getMinutes() * 60);
 
 // ---------- Wachhalten während des Ablaufs (optional, still bei Fehlern) ----------
 let wake = null;
@@ -42,27 +41,29 @@ document.addEventListener('visibilitychange', () => { if (run && document.visibi
 // ---------- Startseite ----------
 function homeView() {
   const minutes = getMinutes();
-  const program = currentProgram();
+  const program = PROGRAM;
+  const [lo, hi] = minuteRange(program);
   const gear = gearList(program);
   const stepBtn = (delta, label) => h('button', { class: 'btn round', type: 'button', 'aria-label': label,
-    disabled: delta < 0 ? minutes <= MINUTES[0] : minutes >= MINUTES[1],
+    disabled: delta < 0 ? minutes <= lo : minutes >= hi,
     onclick: () => {
-      const next = nextMinutes(minutes, delta);
-      if (next === minutes) { toast(delta < 0 ? 'Kürzer geht nicht.' : 'Länger geht nicht.'); return; }
+      const next = nextMinutes(program, minutes, delta);
+      if (next === minutes) { toast(delta < 0 ? 'Kürzer geht nicht: die Übungen brauchen ihre Zeit.' : 'Länger geht nicht.'); return; }
       setMinutes(next); render();
     } }, delta < 0 ? '−' : '+');
   return h('section', {},
     h('h1', {}, 'Mobilität'),
     h('div', { class: 'card' },
       h('h2', {}, 'Mobilitätsprogramm'),
-      h('p', { class: 'muted' }, `${program.length} Übungen · ohne Gewicht`),
+      h('p', { class: 'muted' }, `${program.length} Übungen · ohne Gewicht · Pause dazwischen ${restSeconds(program, minutes)} s`),
       h('div', { class: 'dur', role: 'group', 'aria-label': 'Dauer' },
         h('span', { class: 'dur-label' }, 'Dauer'),
         stepBtn(-1, 'Kürzer'),
         h('b', { class: 'dur-value', 'aria-live': 'polite' }, `${minutes} min`),
         stepBtn(1, 'Länger')),
       minutes !== BASE_MINUTES ? h('button', { class: 'link', type: 'button', onclick: () => { setMinutes(BASE_MINUTES); render(); } }, `Zurück auf ${BASE_MINUTES} min`) : null,
-      h('button', { class: 'btn primary block', type: 'button', onclick: () => startRun(program) }, 'Starten')),
+      h('button', { class: 'btn primary block', type: 'button', onclick: () => startRun(program, minutes) }, 'Starten')),
+    h('p', { class: 'muted gear' }, 'Die Wiederholungen bleiben gleich. Eine längere Dauer macht die Pausen zwischen den Übungen länger.'),
     gear.length ? h('p', { class: 'muted gear' }, `Du brauchst: ${gear.join(', ')}. Was fehlt, lässt du einfach aus – mit „Weiter“.`) : null,
     h('div', { class: 'sec' }, 'Übungen'),
     h('div', { class: 'card list' }, program.map(resolve).map((x) => h('div', { class: 'row' }, h('span', { class: 't' }, x.name), h('b', {}, doseText(x.dose))))),
@@ -73,8 +74,8 @@ function homeView() {
 // ---------- Ablauf ----------
 let run = null;
 
-function startRun(program) {
-  run = { steps: steps(program), index: 0, stepStart: Date.now(), pausedLeft: null, done: false };
+function startRun(program, minutes) {
+  run = { steps: steps(program, minutes), index: 0, stepStart: Date.now(), pausedLeft: null, done: false };
   keepAwake(true);
   location.hash = '#/run';
 }
@@ -110,11 +111,12 @@ function runView() {
       h('button', { class: 'btn primary block', type: 'button', onclick: endRun }, 'Fertig'));
   }
   const st = run.steps[run.index];
+  const rest = st.kind === 'rest';
   const last = run.index === run.steps.length - 1;
   const remain = h('span', {});
   const ringText = h('b', { class: 'ring-time' });
   const ring = st.seconds !== null ? h('div', { class: 'ring', role: 'timer', 'aria-label': 'Restzeit' }, h('div', { class: 'ring-in' }, ringText, h('small', { class: 'muted' }, `von ${fmtClock(st.seconds)}`))) : null;
-  const pause = st.seconds !== null ? h('button', { class: 'btn', type: 'button', onclick: () => {
+  const pause = st.seconds !== null && !rest ? h('button', { class: 'btn', type: 'button', onclick: () => {
     if (run.pausedLeft === null) run.pausedLeft = Math.max(0, st.seconds - elapsed());
     else { run.stepStart = Date.now() - (st.seconds - run.pausedLeft) * 1000; run.pausedLeft = null; }
     render();
@@ -127,7 +129,7 @@ function runView() {
       const left = Math.max(0, st.seconds - el);
       ring.style.setProperty('--p', `${Math.min(100, (el / st.seconds) * 100)}%`);
       ring.classList.toggle('done', left <= 0);
-      ringText.textContent = left <= 0 ? 'Fertig' : fmtClock(Math.ceil(left));
+      ringText.textContent = left <= 0 ? 'Weiter' : fmtClock(Math.ceil(left));
     }
   };
   tick();
@@ -135,19 +137,25 @@ function runView() {
   const root = h('section', { class: 'runner' },
     h('div', { class: 'run-top' },
       h('button', { class: 'btn small', type: 'button', onclick: () => { if (run.index === 0 || confirm('Beenden?')) endRun(); } }, 'Beenden'),
-      h('span', { class: 'muted' }, `Übung ${run.index + 1} von ${run.steps.length}`)),
+      h('span', { class: 'muted' }, rest ? `Pause nach ${st.number} von ${st.total}` : `Übung ${st.number} von ${st.total}`)),
     h('div', { class: 'bar' }, h('div', { class: 'bar-in', style: `width:${Math.round((run.index / run.steps.length) * 100)}%` })),
     h('div', { class: 'muted small run-meta' }, remain),
-    h('div', { class: 'card run-card' },
-      h('h2', {}, st.item.name),
-      h('p', { class: 'muted' }, st.item.cue),
-      st.seconds === null ? h('p', { class: 'run-dose' }, doseText(st.item.dose)) : null,
-      ring, pause,
-      st.seconds !== null ? h('p', { class: 'muted small' }, 'Kein Ton – nur Anzeige.') : null),
+    rest
+      ? h('div', { class: 'card run-card' },
+        h('h2', {}, 'Kurz ausruhen'),
+        h('p', { class: 'muted' }, `Als Nächstes: ${st.item.name} · ${doseText(st.item.dose)}`),
+        ring,
+        h('p', { class: 'muted small' }, 'Kein Ton – nur Anzeige. Mit „Weiter“ geht es sofort los.'))
+      : h('div', { class: 'card run-card' },
+        h('h2', {}, st.item.name),
+        h('p', { class: 'muted' }, st.item.cue),
+        st.seconds === null ? h('p', { class: 'run-dose' }, doseText(st.item.dose)) : null,
+        ring, pause,
+        st.seconds !== null ? h('p', { class: 'muted small' }, 'Kein Ton – nur Anzeige.') : null),
     h('div', { class: 'btn-row' },
       h('button', { class: 'btn', type: 'button', disabled: run.index === 0, onclick: () => go(-1) }, 'Zurück'),
       h('button', { class: 'btn primary', type: 'button', onclick: () => go(1) }, last ? 'Fertig' : 'Weiter')),
-    next ? h('p', { class: 'muted next' }, `Als Nächstes: ${next.item.name} · ${doseText(next.item.dose)}`) : null);
+    next && !rest ? h('p', { class: 'muted next' }, `Danach: Pause ${next.seconds} s`) : null);
   const timer = setInterval(() => { if (!document.body.contains(root) || !run) { clearInterval(timer); return; } tick(); }, 250);
   return root;
 }

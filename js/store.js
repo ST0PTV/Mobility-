@@ -1,7 +1,7 @@
 // Einzige gespeicherte Einstellung: die Wunschdauer in Minuten (nur lokal, Schlüssel mit Präfix mob_).
 // Ohne Speicher (privates Fenster) läuft die App mit dem Standardwert weiter.
-import { BASE_MINUTES } from './data.js';
-import { MINUTES } from './routine.js';
+import { BASE_MINUTES, PROGRAM } from './data.js';
+import { minuteRange } from './routine.js';
 
 const KEY = 'mob_minutes';
 let memory = null;
@@ -10,7 +10,8 @@ export function getMinutes() {
   if (memory !== null) return memory;
   try {
     const v = Number.parseInt(localStorage.getItem(KEY), 10);
-    if (Number.isInteger(v) && v >= MINUTES[0] && v <= MINUTES[1]) return v;
+    const [lo, hi] = minuteRange(PROGRAM);
+    if (Number.isInteger(v) && v >= lo && v <= hi && v % 5 === 0) return v;
   } catch { /* ohne Speicher */ }
   return BASE_MINUTES;
 }

@@ -1,6 +1,6 @@
 /* Mobilität – Service Worker: Precache der App-Shell, danach cache-first mit Update im Hintergrund.
  * CACHE_VERSION bei jeder Änderung an den Dateien hochzählen. */
-const CACHE_VERSION = 1;
+const CACHE_VERSION = 2;
 const CACHE_NAME = `mob-cache-v${CACHE_VERSION}`;
 const PRECACHE = ['./', 'index.html', 'manifest.webmanifest', 'css/app.css', 'js/app.js', 'js/data.js', 'js/routine.js', 'js/store.js',
   'icons/icon-180.png', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/icon-maskable-512.png'];

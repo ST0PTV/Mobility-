@@ -1,11 +1,12 @@
 // Ablauf-Logik ohne DOM (in Node testbar): Zeit, Skalierung auf eine Wunschdauer, Schritte.
 import { EXERCISES } from './data.js';
 
-// Konventionen für die Zeitangabe (keine Messwerte): 3 s pro Wiederholung, 10 s Wechselzeit pro Übung.
+// Konventionen für die Zeitangabe (keine Messwerte): 3 s pro Wiederholung. Die Wiederholungen bleiben fest;
+// die Wunschdauer ändert nur die Pause zwischen den Übungen.
 export const REP_SECONDS = 3;
-export const TRANSITION_SEC = 10;
-export const LIMITS = { seconds: [5, 3600], reps: [1, 100] };
-export const MINUTES = [1, 60];
+export const MIN_REST = 5;      // kürzeste Pause zwischen zwei Übungen
+export const MAX_REST = 180;    // längste Pause
+export const STEP_MINUTES = 5;
 
 export function resolve(entry) {
   const ex = EXERCISES[entry.ref];
@@ -16,28 +17,35 @@ export function itemSeconds(dose) {
   return dose.mode === 'time' ? dose.seconds : dose.reps * REP_SECONDS;
 }
 
-export function totalSeconds(program) {
-  return program.map(resolve).filter(Boolean).reduce((n, x) => n + itemSeconds(x.dose) + TRANSITION_SEC, 0);
+export function workSeconds(program) {
+  return program.map(resolve).filter(Boolean).reduce((n, x) => n + itemSeconds(x.dose), 0);
 }
 
-const clamp = (v, [lo, hi]) => Math.max(lo, Math.min(hi, v));
+const gaps = (program) => Math.max(1, program.map(resolve).filter(Boolean).length - 1);
 
-/** Programm auf eine Zielzeit skalieren: Wiederholungen ganzzahlig, Zeiten auf 5 s, Wechselzeiten bleiben. */
-export function scale(program, targetSec) {
-  const rows = program.map(resolve).filter(Boolean);
-  const work = rows.reduce((n, x) => n + itemSeconds(x.dose), 0);
-  if (!rows.length || work <= 0) return program;
-  const f = Math.max(0.05, (targetSec - rows.length * TRANSITION_SEC) / work);
-  return program.map((e) => (e.dose.mode === 'time'
-    ? { ...e, dose: { mode: 'time', seconds: clamp(Math.round((e.dose.seconds * f) / 5) * 5, LIMITS.seconds) } }
-    : { ...e, dose: { mode: 'reps', reps: clamp(Math.round(e.dose.reps * f), LIMITS.reps) } }));
+/** Kürzeste und längste wählbare Dauer in Minuten (auf 5 min gerundet): Arbeit plus kürzeste/längste Pause. */
+export function minuteRange(program) {
+  const w = workSeconds(program);
+  const lo = Math.ceil((w + gaps(program) * MIN_REST) / 60 / STEP_MINUTES) * STEP_MINUTES;
+  const hi = Math.floor((w + gaps(program) * MAX_REST) / 60 / STEP_MINUTES) * STEP_MINUTES;
+  return [lo, hi];
 }
 
-/** Nächste Zielzeit in Minuten: unter 5 min in 1er-, darüber in 5er-Schritten. */
-export function nextMinutes(cur, delta) {
-  const [lo, hi] = MINUTES;
-  if (delta > 0) return Math.min(hi, cur < 5 ? cur + 1 : Math.floor(cur / 5) * 5 + 5);
-  return Math.max(lo, cur <= 5 ? cur - 1 : Math.ceil(cur / 5) * 5 - 5);
+/** Pause zwischen zwei Übungen (auf 5 s gerundet) für die Wunschdauer. */
+export function restSeconds(program, minutes) {
+  const raw = (minutes * 60 - workSeconds(program)) / gaps(program);
+  return Math.max(MIN_REST, Math.min(MAX_REST, Math.round(raw / 5) * 5));
+}
+
+export function totalSeconds(program, minutes) {
+  return workSeconds(program) + restSeconds(program, minutes) * (program.map(resolve).filter(Boolean).length - 1);
+}
+
+/** Nächste Wunschdauer in 5-Minuten-Schritten innerhalb des Bereichs; gleich bleiben, wenn die Grenze erreicht ist. */
+export function nextMinutes(program, cur, delta) {
+  const [lo, hi] = minuteRange(program);
+  const next = delta > 0 ? Math.floor(cur / STEP_MINUTES) * STEP_MINUTES + STEP_MINUTES : Math.ceil(cur / STEP_MINUTES) * STEP_MINUTES - STEP_MINUTES;
+  return Math.max(lo, Math.min(hi, next));
 }
 
 export function fmtClock(sec) {
@@ -49,18 +57,24 @@ export function doseText(dose) {
   return dose.mode === 'time' ? fmtClock(dose.seconds) : `${dose.reps}×`;
 }
 
-/** Ein Schritt je Übung; Zeitübungen mit Sekunden, Wiederholungsübungen ohne (weiter per Taste). */
-export function steps(program) {
-  return program.map(resolve).filter(Boolean).map((item, i) => ({ index: i, item, seconds: item.dose.mode === 'time' ? item.dose.seconds : null }));
+/** Schritte: je Übung einer (Zeitübungen mit Sekunden, Wiederholungsübungen per Taste), dazwischen eine Pause mit Zeitring. */
+export function steps(program, minutes) {
+  const items = program.map(resolve).filter(Boolean);
+  const rest = restSeconds(program, minutes);
+  const out = [];
+  items.forEach((item, i) => {
+    out.push({ kind: 'exercise', number: i + 1, total: items.length, item, seconds: item.dose.mode === 'time' ? item.dose.seconds : null });
+    if (i < items.length - 1) out.push({ kind: 'rest', number: i + 1, total: items.length, item: items[i + 1], seconds: rest });
+  });
+  return out;
 }
 
-/** Restzeit ab Schritt i inkl. laufendem Schritt (verstrichene Zeit abgezogen), mit Wechselzeiten. */
+const stepSeconds = (st) => (st.kind === 'rest' ? st.seconds : itemSeconds(st.item.dose));
+
+/** Restzeit ab Schritt i inkl. laufendem Schritt (verstrichene Zeit abgezogen). */
 export function remainingSeconds(stepList, index, elapsed = 0) {
   let sec = 0;
-  for (let i = index; i < stepList.length; i++) {
-    const w = itemSeconds(stepList[i].item.dose);
-    sec += (i === index ? Math.max(0, w - elapsed) : w) + (i === stepList.length - 1 ? 0 : TRANSITION_SEC);
-  }
+  for (let i = index; i < stepList.length; i++) sec += i === index ? Math.max(0, stepSeconds(stepList[i]) - elapsed) : stepSeconds(stepList[i]);
   return sec;
 }
 
