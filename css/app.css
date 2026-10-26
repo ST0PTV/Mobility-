@@ -33,6 +33,8 @@ button.row .chev { color: var(--muted); margin-left: 6px; }
 .btn.primary { background: var(--accent); color: var(--on-accent); }
 .btn.block { display: block; width: 100%; margin-top: 16px; font-size: 22px; min-height: 72px; }
 .btn.small { min-height: 48px; padding: 0 16px; font-size: 17px; border-radius: 14px; }
+.dur { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 14px 0 8px; }
+.dur-value { flex: 1; text-align: center; font-size: 32px; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .sec-row { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; }
 .sec-row .btn.small { margin-bottom: 6px; }
 .btn.round.sm { width: 56px; min-height: 56px; font-size: 22px; border-radius: 28px; }

@@ -66,6 +66,13 @@ for (const scheme of ['dark', 'light']) {
   if (shots) await p.screenshot({ path: `${shots}/mob-${scheme}-order.png` });
   await p.getByRole('button', { name: 'Nach unten: Bizeps-Curl ohne Gewicht' }).click(); await p.waitForTimeout(150);
   ok(await first() === 'Schulterdrücken ohne Gewicht', `${scheme}: ▼ schiebt Bizeps-Curl auf Platz 2`);
+  // 1.3.6: Verschieben springt nicht nach oben – Scrollposition bleibt
+  await p.evaluate(() => { document.getElementById('view').scrollTop = 400; });
+  const sBefore = await p.evaluate(() => document.getElementById('view').scrollTop);
+  await p.getByRole('button', { name: 'Nach unten: Bizeps-Curl ohne Gewicht' }).click(); await p.waitForTimeout(150);
+  const sAfter = await p.evaluate(() => document.getElementById('view').scrollTop);
+  ok(sBefore > 100 && Math.abs(sAfter - sBefore) <= 2, `${scheme}: Scrollposition bleibt beim Verschieben (${sBefore} → ${sAfter})`);
+  await p.getByRole('button', { name: 'Nach oben: Bizeps-Curl ohne Gewicht' }).click(); await p.waitForTimeout(150);
   await p.getByRole('button', { name: 'Fertig', exact: true }).click(); await p.waitForTimeout(150);
   await p.reload(); await p.waitForTimeout(250);
   ok(await first() === 'Schulterdrücken ohne Gewicht', `${scheme}: Reihenfolge bleibt nach Neuladen`);
@@ -99,6 +106,30 @@ for (const scheme of ['dark', 'light']) {
   if (shots) await p.screenshot({ path: `${shots}/mob-${scheme}-done.png` });
   await p.getByRole('button', { name: 'Fertig' }).click(); await p.waitForTimeout(250);
   ok(/Mobilitätsprogramm/.test(await txt()), `${scheme}: zurück zur Startseite`);
+  // 1.3.6: Wiederholungen in der Technik-Ansicht ändern (5er-Schritte), gemerkt, gelten in Liste und Ablauf; Hüftkreisen in 15-s-Schritten
+  await p.getByRole('button', { name: /^Bizeps-Curl ohne Gewicht, Technik ansehen/ }).click(); await p.waitForTimeout(250);
+  ok(/20×/.test(await txt()) && await p.getByRole('button', { name: 'Mehr: Bizeps-Curl ohne Gewicht' }).isEnabled(), `${scheme}: Technik-Ansicht zeigt 20× mit − und +`);
+  await p.getByRole('button', { name: 'Mehr: Bizeps-Curl ohne Gewicht' }).click(); await p.waitForTimeout(250);
+  ok(/25×/.test(await txt()) && await p.evaluate(() => document.querySelectorAll('.anim-svg').length === 1), `${scheme}: + ergibt 25×, Animation bleibt`);
+  if (shots) await p.screenshot({ path: `${shots}/mob-${scheme}-dose.png` });
+  const db = await p.getByRole('button', { name: 'Mehr: Bizeps-Curl ohne Gewicht' }).boundingBox();
+  ok(db.width >= 44 && db.height >= 44, `${scheme}: +/−-Tasten groß genug (${Math.round(db.width)}×${Math.round(db.height)})`);
+  await p.getByRole('button', { name: 'Zur Übersicht' }).click(); await p.waitForTimeout(200);
+  ok(/Bizeps-Curl ohne Gewicht\s*25×/.test(await txt()), `${scheme}: Liste zeigt 25×`);
+  await p.reload(); await p.waitForTimeout(250);
+  ok(/Bizeps-Curl ohne Gewicht\s*25×/.test(await txt()), `${scheme}: 25× bleibt nach Neuladen`);
+  await p.getByRole('button', { name: 'Starten' }).click(); await p.waitForTimeout(250);
+  ok(/Bizeps-Curl/.test(await txt()) && /25×/.test(await txt()), `${scheme}: Ablauf nutzt 25×`);
+  await p.getByRole('button', { name: 'Beenden' }).click(); await p.waitForTimeout(200);
+  await p.getByRole('button', { name: /^Hüftkreisen, Technik ansehen/ }).click(); await p.waitForTimeout(250);
+  await p.getByRole('button', { name: 'Länger: Hüftkreisen' }).click(); await p.waitForTimeout(250);
+  ok(/1:15/.test(await p.evaluate(() => document.querySelector('.dur-value').textContent)), `${scheme}: Hüftkreisen +15 s = 1:15`);
+  await p.getByRole('button', { name: 'Kürzer: Hüftkreisen' }).click(); await p.waitForTimeout(150);
+  await p.getByRole('button', { name: 'Zur Übersicht' }).click(); await p.waitForTimeout(200);
+  await p.getByRole('button', { name: /^Bizeps-Curl ohne Gewicht, Technik ansehen/ }).click(); await p.waitForTimeout(250);
+  await p.getByRole('button', { name: 'Weniger: Bizeps-Curl ohne Gewicht' }).click(); await p.waitForTimeout(150);
+  await p.getByRole('button', { name: 'Zur Übersicht' }).click(); await p.waitForTimeout(200);
+  ok(/Bizeps-Curl ohne Gewicht\s*20×/.test(await txt()) && /Hüftkreisen\s*1:00/.test(await txt()), `${scheme}: zurück auf 20× und 1:00`);
   // Animationen: jede Übung mit Animation zeigt Figur und Kernpunkte (ohne Gewichte), die anderen nur Text.
   await p.getByRole('button', { name: 'Starten' }).click(); await p.waitForTimeout(250);
   const seen = [];

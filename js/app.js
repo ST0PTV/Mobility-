@@ -1,7 +1,7 @@
 // Mobilitäts-App: Startseite (Übungen ansehen, Reihenfolge ändern) und Ablauf (eine Übung pro Bildschirm).
 import { PROGRAM, HINTS } from './data.js';
-import { steps, fmtClock, doseText, resolve, orderProgram, moveRef } from './routine.js';
-import { getOrder, setOrder } from './store.js';
+import { steps, fmtClock, doseText, resolve, orderProgram, moveRef, applyDoses, stepDose, DOSE_LIMITS } from './routine.js';
+import { getOrder, setOrder, getDoses, setDose } from './store.js';
 import { animationCard } from './anim-view.js';
 
 const view = document.getElementById('view');
@@ -40,7 +40,7 @@ async function keepAwake(on) {
 document.addEventListener('visibilitychange', () => { if (run && document.visibilityState === 'visible') keepAwake(true); });
 
 // ---------- Startseite ----------
-const currentProgram = () => orderProgram(PROGRAM, getOrder());
+const currentProgram = () => applyDoses(orderProgram(PROGRAM, getOrder()), getDoses());
 let editOrder = false;
 
 function homeView() {
@@ -65,6 +65,20 @@ function homeView() {
 }
 
 // ---------- Technik einer Übung (aus der Liste der Startseite) ----------
+// Wiederholungen (bzw. Sekunden bei Zeitübungen) in der Technik-Ansicht ändern; wird gemerkt und gilt im Ablauf.
+function doseControl(x) {
+  const time = x.dose.mode === 'time';
+  const l = DOSE_LIMITS[time ? 'time' : 'reps'];
+  const cur = time ? x.dose.seconds : x.dose.reps;
+  const btn = (d, label) => h('button', { class: 'btn round', type: 'button', 'aria-label': `${label}: ${x.name}`,
+    disabled: d < 0 ? cur <= l.min : cur >= l.max,
+    onclick: () => { setDose(x.ref, stepDose(x.dose, d)); render(); } }, d < 0 ? '−' : '+');
+  return h('div', { class: 'dur', role: 'group', 'aria-label': time ? 'Dauer' : 'Wiederholungen' },
+    btn(-1, time ? 'Kürzer' : 'Weniger'),
+    h('b', { class: 'dur-value', 'aria-live': 'polite' }, doseText(x.dose)),
+    btn(1, time ? 'Länger' : 'Mehr'));
+}
+
 function exerciseView(i) {
   const list = currentProgram().map(resolve).filter(Boolean);
   const x = list[i];
@@ -77,7 +91,7 @@ function exerciseView(i) {
     h('div', { class: 'card run-card' },
       h('h2', {}, x.name),
       h('p', { class: 'muted' }, x.cue),
-      h('p', { class: 'run-dose' }, doseText(x.dose)),
+      doseControl(x),
       animBlock(x)),
     h('div', { class: 'btn-row' },
       h('button', { class: 'btn', type: 'button', disabled: i === 0, onclick: go2(i - 1) }, 'Zurück'),
@@ -184,13 +198,20 @@ function runView() {
 }
 
 // ---------- Router ----------
+let shownHash = null;
 function render() {
   stopAnim();
   const m = /^#\/ex\/(\d+)$/.exec(location.hash);
   const onRun = location.hash === '#/run';
+  // Gleiche Seite neu aufbauen (Reihenfolge, Wiederholungen ändern): Scrollposition und Fokus bleiben erhalten.
+  const same = !onRun && shownHash === location.hash;
+  const top = view.scrollTop;
+  const label = same ? document.activeElement?.getAttribute?.('aria-label') : null;
   const node = onRun ? runView() : m ? exerciseView(Number(m[1])) : homeView();
   view.replaceChildren(node);
-  if (!onRun) view.scrollTop = 0;
+  shownHash = location.hash;
+  if (!onRun) view.scrollTop = same ? top : 0;
+  if (label) [...view.querySelectorAll('button')].find((el) => el.getAttribute('aria-label') === label && !el.disabled)?.focus({ preventScroll: true });
 }
 window.addEventListener('hashchange', render);
 render();

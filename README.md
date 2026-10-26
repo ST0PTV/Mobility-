@@ -1,8 +1,8 @@
 # Mobilität
 
 Kleine, eigenständige Web-App (PWA) mit einem täglichen Mobilitätsprogramm aus ruhigen Übungen ohne Gewicht.
-Es gibt keine Pausen zwischen den Übungen: Die Wiederholungen bleiben fest (20 je Übung, Hüftkreisen 1 min), nach „Weiter“ folgt gleich die nächste Übung. Oben im Ablauf zählt „Zeit m:ss“ hoch, wie lange das Programm schon läuft. Die Reihenfolge der Übungen änderst du auf der Startseite mit „Reihenfolge ändern“ (▲▼); sie wird gemerkt. Antippen einer Übung in der Liste zeigt ihre Technik-Animation. Die App ist immer dunkel.
-Alle Daten bleiben auf dem Gerät (einzige gespeicherte Einstellung: die Reihenfolge der Übungen, Schlüssel `mob_order`). Keine Konten, kein Tracking, kein Server.
+Es gibt keine Pausen zwischen den Übungen: Grundwert 20 Wiederholungen je Übung (Hüftkreisen 1 min), in der Technik-Ansicht einer Übung mit −/+ änderbar (5er-Schritte, Hüftkreisen 15 s) und gemerkt; nach „Weiter“ folgt gleich die nächste Übung. Oben im Ablauf zählt „Zeit m:ss“ hoch, wie lange das Programm schon läuft. Die Reihenfolge der Übungen änderst du auf der Startseite mit „Reihenfolge ändern“ (▲▼); sie wird gemerkt. Antippen einer Übung in der Liste zeigt ihre Technik-Animation. Die App ist immer dunkel.
+Alle Daten bleiben auf dem Gerät (gespeicherte Einstellungen: Reihenfolge und Dosen der Übungen, Schlüssel `mob_order`, `mob_doses`). Keine Konten, kein Tracking, kein Server.
 
 - Abgeleitet aus dem Workout Tracker (`ST0PTV/Workout-Tracker`), aber als eigener, eingefrorener Stand mit eigenem Link.
 - Kein Krafttraining, keine Statistik, kein Streak. Nur so weit bewegen, wie es angenehm ist.

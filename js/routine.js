@@ -43,6 +43,26 @@ export function moveRef(refs, index, delta) {
   return next;
 }
 
+// Einstellbare Dosis in der Technik-Ansicht: Wiederholungen in 5er-Schritten (5–60), Zeitübungen in 15-s-Schritten (15–180 s).
+export const DOSE_LIMITS = { reps: { min: 5, max: 60, step: 5 }, time: { min: 15, max: 180, step: 15 } };
+
+/** Dosis um einen Schritt ändern (delta −1/+1), an den Grenzen bleibt sie gleich. Gibt die neue Zahl (Wiederholungen bzw. Sekunden) zurück. */
+export function stepDose(dose, delta) {
+  const l = DOSE_LIMITS[dose.mode === 'time' ? 'time' : 'reps'];
+  const cur = dose.mode === 'time' ? dose.seconds : dose.reps;
+  return Math.max(l.min, Math.min(l.max, cur + delta * l.step));
+}
+
+/** Gespeicherte Dosen (Kennung → Zahl) auf das Programm anwenden; ungültige Werte werden ignoriert. */
+export function applyDoses(program, doses) {
+  return program.map((e) => {
+    const v = doses && doses[e.ref];
+    const l = DOSE_LIMITS[e.dose.mode === 'time' ? 'time' : 'reps'];
+    if (!Number.isInteger(v) || v < l.min || v > l.max || v % l.step !== 0) return e;
+    return { ...e, dose: e.dose.mode === 'time' ? { ...e.dose, seconds: v } : { ...e.dose, reps: v } };
+  });
+}
+
 /** Schritte: eine Übung je Schritt (Zeitübungen mit Sekunden, Wiederholungsübungen per Taste). */
 export function steps(program) {
   const items = program.map(resolve).filter(Boolean);
