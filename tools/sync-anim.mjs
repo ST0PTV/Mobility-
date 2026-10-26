@@ -24,7 +24,8 @@ for (const f of ['motion.js', 'motion-front.js', 'motion-female.js', 'anim-bar.j
 // ---- anim-view.js: Importe ersetzen, Gewichte ausblenden ----
 let view = read('js/anim-view.js');
 const rep = (from, to) => { if (!view.includes(from)) throw new Error(`anim-view.js: Stelle nicht gefunden: ${from.slice(0, 60)}`); view = view.replace(from, to); };
-rep("import { poolEntry } from './pool.js';", "import { poolEntry } from './pool-shim.js';");
+rep("import { poolEntry as poolOnly } from './pool.js';\nimport { ITEM_BY_REF } from './routine-data.js';", "import { poolEntry } from './pool-shim.js';");
+rep("const poolEntry = (ref) => poolOnly(ref) || ITEM_BY_REF[ref] || null;\n", "");
 rep("import { MUSCLES } from './model.js';\nimport * as store from './store.js';", "import { MUSCLES } from './pool-shim.js';");
 rep("const figureSex = () => (store.get('settings')?.figure === 'female' ? 'female' : 'male');", "const figureSex = () => 'male';");
 // Übungen ohne Gewicht: Kurzhanteln (db, dumbbell) werden nicht gezeichnet und nicht in die Begrenzung gerechnet.
@@ -69,9 +70,10 @@ write('js/anim-data.js', `${src.slice(0, a0)}${startMark}\n  ${kept.join(',\n  '
 // ---- pool-shim.js: Name und Muskeln je Referenz aus dem Pool der Haupt-App ----
 const poolMod = await import(pathToFileURL(path.join(main, 'js/pool.js')).href);
 const modelMod = await import(pathToFileURL(path.join(main, 'js/model.js')).href);
+const routineMod = await import(pathToFileURL(path.join(main, 'js/routine-data.js')).href);
 const pool = {};
 for (const ref of wanted) {
-  const p = (poolMod.POOL || poolMod.default || []).find?.((x) => x.ref === ref) || poolMod.poolEntry?.(ref);
+  const p = (poolMod.POOL || poolMod.default || []).find?.((x) => x.ref === ref) || poolMod.poolEntry?.(ref) || routineMod.ITEM_BY_REF?.[ref]; // 1.3.0: Mobility-Übungen ohne Poolplatz (Hüftkreisen) aus dem Routine-Katalog
   if (!p) throw new Error(`Pool-Eintrag fehlt: ${ref}`);
   pool[ref] = { name: p.name, muscles: { primary: p.muscles.primary, secondary: p.muscles.secondary } };
 }

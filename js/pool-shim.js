@@ -36,6 +36,18 @@ export const POOL = {
       ]
     }
   },
+  "chair-squat": {
+    "name": "Kniebeuge auf den Stuhl",
+    "muscles": {
+      "primary": [
+        "quads",
+        "glutes"
+      ],
+      "secondary": [
+        "adductors"
+      ]
+    }
+  },
   "dumbbell-reverse-lunge": {
     "name": "Ausfallschritte rückwärts",
     "muscles": {
@@ -61,6 +73,28 @@ export const POOL = {
       ]
     }
   },
+  "hip-circles": {
+    "name": "Hüftkreisen",
+    "muscles": {
+      "primary": [
+        "hip-flexors",
+        "glutes"
+      ],
+      "secondary": [
+        "abductors",
+        "adductors"
+      ]
+    }
+  },
+  "balance-board-calf-raise": {
+    "name": "Balanceboard-Wadenheben",
+    "muscles": {
+      "primary": [
+        "calves"
+      ],
+      "secondary": []
+    }
+  },
   "dumbbell-triceps-kickback": {
     "name": "Kurzhantel-Kickback",
     "muscles": {
@@ -69,6 +103,18 @@ export const POOL = {
       ],
       "secondary": [
         "rear-delts"
+      ]
+    }
+  },
+  "door-frame-push-up": {
+    "name": "Türrahmen-Push-up",
+    "muscles": {
+      "primary": [
+        "chest"
+      ],
+      "secondary": [
+        "triceps",
+        "front-delts"
       ]
     }
   },

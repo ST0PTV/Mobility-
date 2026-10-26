@@ -23,8 +23,8 @@ const url = `http://localhost:${srv.address().port}/`;
 let fails = 0;
 const ok = (c, m) => { console.log(`${c ? 'ok  ' : 'FAIL'} ${m}`); if (!c) fails++; };
 
-const ANIM_COUNT = 9; // wächst mit den neuen Animationen (1.3.0: 13)
-const EXPECT_NO_ANIM = 'Kniebeuge auf den Stuhl|Hüftkreisen|Balanceboard-Wadenheben|Türrahmen-Push-up';
+const ANIM_COUNT = 13; // alle 13 Übungen haben seit 1.3.0 eine Animation
+const EXPECT_NO_ANIM = '';
 const b = await chromium.launch();
 for (const scheme of ['dark', 'light']) {
   const p = await (await b.newContext({ viewport: { width: 390, height: 844 }, colorScheme: scheme, serviceWorkers: 'block' })).newPage();

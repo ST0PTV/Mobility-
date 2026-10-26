@@ -107,6 +107,8 @@ function sceneNodes(scene, behind) {
   return out;
 }
 
+// v3.6.0: Name und Muskeln aus dem Übungspool, sonst aus dem Routine-Katalog (Mobility-Übungen ohne Poolplatz, z. B. Hüftkreisen).
+
 // Karte mit Figur und Steuerung. Rückgabe: { el, stop }.
 export function animationCard(ref, { onKeyPoint = null } = {}) {
   const anim = animationFor(ref);

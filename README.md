@@ -22,3 +22,5 @@ PLAYWRIGHT_MODULE=<Ordner von playwright> node tests/browser-check.mjs [Screensh
 Bei jeder Änderung an Dateien `CACHE_VERSION` in `sw.js` hochzählen, sonst bleibt auf den Geräten der alte Stand im Cache.
 
 Veröffentlichung über GitHub Pages (Branch `main`, Ordner `/`).
+
+Ab 1.3.0 hat jede der 13 Übungen eine Animation. Für Stuhl-Kniebeuge, Türrahmen-Push-up, Balanceboard-Wadenheben und Hüftkreisen liegen keine Messstudien mit Gelenkwinkeln vor: Die Karten sind als „Übertragen“ bzw. „Zeichenkonvention“ gekennzeichnet.
