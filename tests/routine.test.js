@@ -1,6 +1,8 @@
 // Tests der Ablauf-Logik (Node): node tests/routine.test.js
 import assert from 'node:assert/strict';
 import { PROGRAM, EXERCISES } from '../js/data.js';
+import * as M from '../js/motion.js';
+import * as D from '../js/anim-data.js';
 import { workSeconds, steps, doseText, gearList, itemSeconds, fmtClock, orderProgram, moveRef, stepDose, applyDoses } from '../js/routine.js';
 
 let n = 0;
@@ -61,6 +63,13 @@ test('Gespeicherte Dosen gelten je Übung; ungültige Werte und Unbekanntes werd
   assert.equal(PROGRAM[0].dose.reps, 20);
   assert.equal(workSeconds(applyDoses(PROGRAM, {})), 780);
   assert.equal(steps(p)[0].item.dose.reps, 30);
+});
+test('Türrahmen-Push-up: Füße flach auf dem Boden, nicht auf den Zehenspitzen (oben und unten)', () => {
+  const poses = M.resolveFrames(D.framesOf(D.animationFor('door-frame-push-up'))).map((f) => M.solvePose(f.pose));
+  assert.equal(poses.length, 2);
+  assert.ok(poses.every((P) => Math.abs(P.F.foot.d[1]) < 0.01 && P.F.foot.d[0] > 0.99), 'Fuß waagerecht');
+  assert.ok(poses.every((P) => Math.abs(P.joints.toe[1] + 2) < 1.5), 'Fußsohle am Boden');
+  assert.ok(poses.every((P) => P.joints.ankle[1] < -8), 'Sprunggelenk über dem Boden');
 });
 test('Geräteliste ohne Doppelte', () => {
   assert.deepEqual(gearList(PROGRAM).sort(), ['Balanceboard', 'Matte', 'Stuhl', 'Türrahmen']);

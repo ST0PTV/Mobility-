@@ -106,6 +106,11 @@ for (const scheme of ['dark', 'light']) {
   if (shots) await p.screenshot({ path: `${shots}/mob-${scheme}-done.png` });
   await p.getByRole('button', { name: 'Fertig' }).click(); await p.waitForTimeout(250);
   ok(/Mobilitätsprogramm/.test(await txt()), `${scheme}: zurück zur Startseite`);
+  // 1.3.7: Türrahmen-Push-up mit flachen Füßen (Sicht kontrolliert per Bild); Animation läuft ohne Fehler
+  await p.getByRole('button', { name: /^Türrahmen-Push-up, Technik ansehen/ }).click(); await p.waitForTimeout(600);
+  ok(await p.evaluate(() => document.querySelectorAll('.anim-svg').length === 1) && /Türrahmen-Push-up/.test(await txt()), `${scheme}: Türrahmen-Push-up zeigt die Animation`);
+  if (shots) await p.screenshot({ path: `${shots}/mob-${scheme}-door.png` });
+  await p.getByRole('button', { name: 'Zur Übersicht' }).click(); await p.waitForTimeout(200);
   // 1.3.6: Wiederholungen in der Technik-Ansicht ändern (5er-Schritte), gemerkt, gelten in Liste und Ablauf; Hüftkreisen in 15-s-Schritten
   await p.getByRole('button', { name: /^Bizeps-Curl ohne Gewicht, Technik ansehen/ }).click(); await p.waitForTimeout(250);
   ok(/20×/.test(await txt()) && await p.getByRole('button', { name: 'Mehr: Bizeps-Curl ohne Gewicht' }).isEnabled(), `${scheme}: Technik-Ansicht zeigt 20× mit − und +`);
