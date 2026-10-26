@@ -34,11 +34,13 @@ for (const scheme of ['dark', 'light']) {
   await p.goto(url); await p.waitForTimeout(300);
   const txt = () => p.evaluate(() => document.getElementById('view').innerText);
   let t = await txt();
-  ok(/Mobilitätsprogramm/.test(t) && /13 Übungen/.test(t) && /rund 15 min/.test(t) && /10 s/.test(t) && /Starten/.test(t), `${scheme}: Startseite mit Pause 10 s und rund 15 min`);
+  ok(/Mobilitätsprogramm/.test(t) && /13 Übungen/.test(t) && /10 s/.test(t) && /Starten/.test(t), `${scheme}: Startseite mit Titel, 13 Übungen, Pause 10 s und Starten`);
+  // 1.3.2: Karte nur noch Titel, Anzahl, Pause −/+ und Starten (Nutzer); Hilfetexte, Geräteliste, Gesamtzeit und „Zurück auf“ entfernt
+  ok(!/rund \d+ min|ohne Gewicht ·|Du brauchst|Wiederholungen bleiben gleich|Zurück auf/.test(t), `${scheme}: keine Zusatztexte auf der Startseite`);
   ok(!/≈|Schätzung|object HTML|undefined|NaN/.test(t), `${scheme}: keine ≈, Schätzung oder undefined`);
-  ok(/Stuhl/.test(t) && /Balanceboard/.test(t), `${scheme}: Geräteliste`);
+  ok(/Übungen/.test(t) && /Bizeps-Curl/.test(t) && /Hüftkreisen/.test(t), `${scheme}: Übersicht der Übungen bleibt`);
   if (shots) await p.screenshot({ path: `${shots}/mob-${scheme}-home.png` });
-  ok(/Wiederholungen bleiben gleich/.test(t) && !/Mittelwerte aus kleinen Studien/.test(t), `${scheme}: Hinweis zu den Wiederholungen`);
+  ok(!/Mittelwerte aus kleinen Studien/.test(t), `${scheme}: keine Studien-Texte`);
   await p.getByRole('button', { name: 'Pause länger' }).click();
   t = await txt();
   ok(/15 s/.test(t) && /20×/.test(t) && !/2[1-9]×|[3-9]\d×/.test(t), `${scheme}: + ergibt 15 s, Wiederholungen bleiben 20`);
@@ -46,11 +48,11 @@ for (const scheme of ['dark', 'light']) {
   ok(/1 min 15 s/.test(await txt()), `${scheme}: 15 s + 10 Schritte = 1 min 15 s (5-s-Schritte bis 60 s, dann 15 s)`);
   await p.reload(); await p.waitForTimeout(200);
   ok(/1 min 15 s/.test(await txt()), `${scheme}: Pause bleibt nach Neuladen`);
-  await p.getByRole('button', { name: /Zurück auf 10 s/ }).click();
-  ok(/10 s/.test(await txt()) && /rund 15 min/.test(await txt()), `${scheme}: zurück auf 10 s`);
+  for (let i = 0; i < 11; i++) await p.getByRole('button', { name: 'Pause kürzer' }).click();
+  ok(/10 s/.test(await txt()), `${scheme}: mit − zurück auf 10 s`);
   for (let i = 0; i < 2; i++) await p.getByRole('button', { name: 'Pause kürzer' }).click();
   ok(/keine/.test(await txt()) && await p.getByRole('button', { name: 'Pause kürzer' }).isDisabled(), `${scheme}: 0 s = keine Pause, kürzer nicht möglich`);
-  await p.getByRole('button', { name: /Zurück auf 10 s/ }).click();
+  for (let i = 0; i < 2; i++) await p.getByRole('button', { name: 'Pause länger' }).click();
   await p.getByRole('button', { name: 'Starten' }).click(); await p.waitForTimeout(250);
   t = await txt();
   ok(/Übung 1 von 13/.test(t) && /Bizeps-Curl/.test(t) && /20×/.test(t) && !/Als Nächstes/.test(t), `${scheme}: Ablauf startet mit Bizeps-Curl 20×, ohne Pausen-Leiste`);

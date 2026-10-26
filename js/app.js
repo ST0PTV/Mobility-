@@ -1,6 +1,6 @@
 // Mobilitäts-App: Startseite (Dauer einstellen, Übungen ansehen) und Ablauf (eine Übung pro Bildschirm).
-import { PROGRAM, BASE_REST, HINTS } from './data.js';
-import { nextRest, fmtRest, totalSeconds, steps, remainingSeconds, fmtClock, doseText, gearList, resolve, MAX_REST, REST_ADJUST } from './routine.js';
+import { PROGRAM, HINTS } from './data.js';
+import { nextRest, fmtRest, steps, remainingSeconds, fmtClock, doseText, resolve, MAX_REST, REST_ADJUST } from './routine.js';
 import { getRest, setRest } from './store.js';
 import { animationCard } from './anim-view.js';
 
@@ -43,7 +43,6 @@ document.addEventListener('visibilitychange', () => { if (run && document.visibi
 function homeView() {
   const rest = getRest();
   const program = PROGRAM;
-  const gear = gearList(program);
   const stepBtn = (delta, label) => h('button', { class: 'btn round', type: 'button', 'aria-label': label,
     disabled: delta < 0 ? rest <= 0 : rest >= MAX_REST,
     onclick: () => { setRest(nextRest(rest, delta)); render(); } }, delta < 0 ? '−' : '+');
@@ -51,16 +50,13 @@ function homeView() {
     h('h1', {}, 'Mobilität'),
     h('div', { class: 'card' },
       h('h2', {}, 'Mobilitätsprogramm'),
-      h('p', { class: 'muted' }, `${program.length} Übungen · ohne Gewicht · Gesamt rund ${Math.round(totalSeconds(program, rest) / 60)} min`),
+      h('p', { class: 'muted' }, `${program.length} Übungen`),
       h('div', { class: 'dur', role: 'group', 'aria-label': 'Pause zwischen den Übungen' },
         h('span', { class: 'dur-label' }, 'Pause'),
         stepBtn(-1, 'Pause kürzer'),
         h('b', { class: 'dur-value', 'aria-live': 'polite' }, fmtRest(rest)),
         stepBtn(1, 'Pause länger')),
-      rest !== BASE_REST ? h('button', { class: 'link', type: 'button', onclick: () => { setRest(BASE_REST); render(); } }, `Zurück auf ${fmtRest(BASE_REST)}`) : null,
       h('button', { class: 'btn primary block', type: 'button', onclick: () => startRun(program, rest) }, 'Starten')),
-    h('p', { class: 'muted gear' }, 'Die Wiederholungen bleiben gleich. Du wählst, wie lang die Pause zwischen den Übungen ist; die Gesamtzeit ergibt sich daraus.'),
-    gear.length ? h('p', { class: 'muted gear' }, `Du brauchst: ${gear.join(', ')}. Was fehlt, lässt du einfach aus – mit „Weiter“.`) : null,
     h('div', { class: 'sec' }, 'Übungen'),
     h('div', { class: 'card list' }, program.map(resolve).map((x) => h('div', { class: 'row' }, h('span', { class: 't' }, x.name), h('b', {}, doseText(x.dose))))),
     h('div', { class: 'sec' }, 'Hinweise'),
