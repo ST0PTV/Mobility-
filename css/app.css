@@ -67,8 +67,9 @@ p { margin: 8px 0; }
 .run-anim .anim-card { margin: 0; }
 .run-anim .anim-kps { font-size: 17px; }
 .icon { fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
-/* Zurück/Weiter bleiben beim Scrollen unten sichtbar (die Animation macht die Seite länger) */
-.runner .btn-row { position: sticky; bottom: 0; z-index: 5; margin: 8px -16px 0; padding: 10px 16px calc(var(--safe-bottom) + 10px); background: var(--bg); box-shadow: 0 -1px 0 var(--line); }
+/* Zurück/Weiter sind fest am unteren Bildschirmrand (die Animation macht die Seite länger, nur der Inhalt scrollt) */
+.runner { padding-bottom: calc(var(--safe-bottom) + 104px); }
+.runner .btn-row { position: fixed; left: 0; right: 0; bottom: 0; z-index: 5; margin: 0; padding: 10px max(16px, calc(50% - 300px)) calc(var(--safe-bottom) + 10px); background: var(--bg); box-shadow: 0 -1px 0 var(--line); }
 .run-dose { font-size: 56px; }
 .run-card { padding: 16px 14px; }
 .run-card h2 { font-size: 24px; margin-bottom: 2px; }
