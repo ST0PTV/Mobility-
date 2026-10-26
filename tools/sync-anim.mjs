@@ -31,6 +31,8 @@ rep("const figureSex = () => (store.get('settings')?.figure === 'female' ? 'fema
 // Übungen ohne Gewicht: Kurzhanteln (db, dumbbell) werden nicht gezeichnet und nicht in die Begrenzung gerechnet.
 rep("    for (const s of pose.scene) {\n      if (s.noBounds)", "    for (const s of pose.scene) {\n      if (s.type === 'db' || s.type === 'dumbbell') continue; // Mobility: ohne Gewicht\n      if (s.noBounds)");
 rep("  for (const s of scene) {\n    const front", "  for (const s of scene) {\n    if (s.type === 'db' || s.type === 'dumbbell') continue; // Mobility: ohne Gewicht\n    const front");
+// Mobility: der Hinweis "Mittelwerte aus kleinen Studien" entfällt (Wunsch des Nutzers).
+rep("    list,\n    h('p', { class: 'muted small' }, 'Mittelwerte aus kleinen Studien – Orientierung, keine Vorgabe.'));", "    list);");
 write('js/anim-view.js', view);
 
 // ---- anim-data.js: nur gewählte Animationen ----
