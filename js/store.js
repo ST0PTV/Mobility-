@@ -1,21 +1,21 @@
-// Einzige gespeicherte Einstellung: die Pause zwischen den Übungen in Sekunden (nur lokal, Schlüssel mit Präfix mob_).
-// Ohne Speicher (privates Fenster) läuft die App mit dem Standardwert weiter.
-import { BASE_REST } from './data.js';
-import { MIN_REST, MAX_REST } from './routine.js';
-
-const KEY = 'mob_rest';
+// Einzige gespeicherte Einstellung: die Reihenfolge der Übungen (Liste der Kennungen; nur lokal, Schlüssel mit Präfix mob_).
+// Ohne Speicher (privates Fenster) gilt die Reihenfolge bis zum Schließen.
+const KEY = 'mob_order';
 let memory = null;
 
-export function getRest() {
+export function getOrder() {
   if (memory !== null) return memory;
   try {
-    const v = Number.parseInt(localStorage.getItem(KEY), 10);
-    if (Number.isInteger(v) && v >= MIN_REST && v <= MAX_REST && v % 5 === 0) return v;
-  } catch { /* ohne Speicher */ }
-  return BASE_REST;
+    const v = JSON.parse(localStorage.getItem(KEY));
+    if (Array.isArray(v) && v.every((x) => typeof x === 'string')) return v;
+  } catch { /* ohne Speicher oder ungültig */ }
+  return [];
 }
 
-export function setRest(v) {
-  memory = v;
-  try { localStorage.setItem(KEY, String(v)); } catch { /* ohne Speicher: gilt bis zum Schließen */ }
+export function setOrder(refs) {
+  memory = [...refs];
+  try { localStorage.setItem(KEY, JSON.stringify(memory)); } catch { /* ohne Speicher: gilt bis zum Schließen */ }
 }
+
+// Alte Einstellung „Pause“ (bis 1.3.3) wird nicht mehr gebraucht.
+try { localStorage.removeItem('mob_rest'); } catch { /* ohne Speicher */ }

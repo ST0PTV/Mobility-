@@ -1,4 +1,4 @@
-// Browser-Check (Playwright): Startseite, Pause in der Leiste (gemerkt), Ablauf mit Pausen-Leiste, Zeitübung, Ende; System hell und dunkel (App immer dunkel); keine Konsolenfehler.
+// Browser-Check (Playwright): Startseite, Reihenfolge ändern, Ablauf ohne Pausen, Ablauf mit Pausen-Leiste, Zeitübung, Ende; System hell und dunkel (App immer dunkel); keine Konsolenfehler.
 // Aufruf: node tests/browser-check.mjs [Ordner für Screenshots]
 import { createRequire } from 'node:module';
 // Keine Abhängigkeit im Repo: Playwright wird in der Umgebung gesucht (PLAYWRIGHT_MODULE = Ordner des Pakets).
@@ -53,57 +53,52 @@ for (const scheme of ['dark', 'light']) {
   await p.getByRole('button', { name: 'Zur Übersicht' }).click(); await p.waitForTimeout(200);
   ok(/Mobilitätsprogramm/.test(await txt()) && await p.evaluate(() => document.querySelectorAll('.anim-svg').length === 0), `${scheme}: „Zur Übersicht“ führt zur Startseite zurück`);
   ok(!/Mittelwerte aus kleinen Studien/.test(t), `${scheme}: keine Studien-Texte`);
-  // 1.3.3: keine Pausen-Einstellung auf der Startseite; die App merkt sich die in der Pausen-Leiste eingestellte Zeit
-  ok(!/Pause|−|\+/.test(t) && await p.getByRole('button', { name: /Pause (kürzer|länger)/ }).count() === 0, `${scheme}: keine Pausen-Einstellung auf der Startseite`);
+  // 1.3.5: keine Pausen (weder Einstellung noch Leiste), Wiederholungen bleiben 20
+  ok(!/Pause|−|\+/.test(t) && await p.getByRole('button', { name: /Pause/ }).count() === 0, `${scheme}: keine Pausen-Einstellung auf der Startseite`);
   ok(/20×/.test(t) && !/2[1-9]×|[3-9]\d×/.test(t), `${scheme}: Wiederholungen bleiben 20`);
+  // 1.3.5: Reihenfolge mit ▲▼ auf der Startseite ändern, gemerkt nach Neuladen, gilt im Ablauf
+  const first = () => p.evaluate(() => document.querySelector('.card.list .row .t').textContent);
+  ok(await first() === 'Bizeps-Curl ohne Gewicht', `${scheme}: Grundreihenfolge beginnt mit Bizeps-Curl`);
+  await p.getByRole('button', { name: 'Reihenfolge ändern' }).click(); await p.waitForTimeout(150);
+  ok(await p.getByRole('button', { name: /Technik ansehen/ }).count() === 0 && await p.getByRole('button', { name: 'Nach oben: Bizeps-Curl ohne Gewicht' }).isDisabled(), `${scheme}: Bearbeiten-Modus zeigt ▲▼, oberste Übung kann nicht höher`);
+  const arrowBox = await p.getByRole('button', { name: 'Nach unten: Bizeps-Curl ohne Gewicht' }).boundingBox();
+  ok(arrowBox.width >= 44 && arrowBox.height >= 44, `${scheme}: ▲▼-Tasten groß genug (${Math.round(arrowBox.width)}×${Math.round(arrowBox.height)})`);
+  if (shots) await p.screenshot({ path: `${shots}/mob-${scheme}-order.png` });
+  await p.getByRole('button', { name: 'Nach unten: Bizeps-Curl ohne Gewicht' }).click(); await p.waitForTimeout(150);
+  ok(await first() === 'Schulterdrücken ohne Gewicht', `${scheme}: ▼ schiebt Bizeps-Curl auf Platz 2`);
+  await p.getByRole('button', { name: 'Fertig', exact: true }).click(); await p.waitForTimeout(150);
+  await p.reload(); await p.waitForTimeout(250);
+  ok(await first() === 'Schulterdrücken ohne Gewicht', `${scheme}: Reihenfolge bleibt nach Neuladen`);
+  await p.getByRole('button', { name: 'Starten' }).click(); await p.waitForTimeout(250);
+  ok(/Übung 1 von 13/.test(await txt()) && /Schulterdrücken/.test(await txt()), `${scheme}: Ablauf folgt der neuen Reihenfolge`);
+  await p.getByRole('button', { name: 'Beenden' }).click(); await p.waitForTimeout(200);
+  await p.getByRole('button', { name: 'Reihenfolge ändern' }).click(); await p.waitForTimeout(150);
+  await p.getByRole('button', { name: 'Nach oben: Bizeps-Curl ohne Gewicht' }).click(); await p.waitForTimeout(150);
+  await p.getByRole('button', { name: 'Fertig', exact: true }).click(); await p.waitForTimeout(150);
+  ok(await first() === 'Bizeps-Curl ohne Gewicht', `${scheme}: ▲ stellt die Grundreihenfolge wieder her`);
   await p.getByRole('button', { name: 'Starten' }).click(); await p.waitForTimeout(250);
   t = await txt();
-  ok(/Übung 1 von 13/.test(t) && /Bizeps-Curl/.test(t) && /20×/.test(t) && !/Als Nächstes/.test(t), `${scheme}: Ablauf startet mit Bizeps-Curl 20×, ohne Pausen-Leiste`);
+  ok(/Übung 1 von 13/.test(t) && /Bizeps-Curl/.test(t) && /20×/.test(t) && /Zeit 0:0\d/.test(t) && !/noch \d|Als Nächstes/.test(t), `${scheme}: Ablauf startet mit Bizeps-Curl 20× und zählt die Zeit hoch („Zeit 0:0x“)`);
   if (shots) await p.screenshot({ path: `${shots}/mob-${scheme}-run.png` });
   await p.getByRole('button', { name: 'Weiter', exact: true }).click(); await p.waitForTimeout(300);
   t = await txt();
-  ok(/Übung 2 von 13/.test(t) && /Schulterdrücken/.test(t) && /0:10/.test(t) && /Als Nächstes: Schulterdrücken/.test(t) && !/Kurz ausruhen/.test(t), `${scheme}: nach „Weiter“ nächste Übung mit Pausen-Leiste unten`);
-  const geo = await p.evaluate(() => { const r = document.querySelector('.restbar').getBoundingClientRect(); const d = document.querySelector('.dock').getBoundingClientRect(); const row = document.querySelector('.btn-row').getBoundingClientRect(); return { rb: Math.round(r.bottom), top: Math.round(row.top), dockBottom: Math.round(d.bottom), h: innerHeight }; });
-  ok(geo.dockBottom === geo.h && geo.rb <= geo.top, `${scheme}: Pausen-Leiste und Tasten fest am unteren Rand`);
-  if (shots) await p.screenshot({ path: `${shots}/mob-${scheme}-rest.png` });
-  await p.getByRole('button', { name: 'Pause 15 Sekunden länger' }).click();
-  ok(/0:(2[0-5])/.test(await p.evaluate(() => document.querySelector('.rt-time').textContent)), `${scheme}: +15 verlängert die Pause (10 → 25 s)`);
-  await p.getByRole('button', { name: 'Pause 15 Sekunden kürzer' }).click();
-  ok(/0:(1[0-5])/.test(await p.evaluate(() => document.querySelector('.rt-time').textContent)), `${scheme}: −15 verkürzt wieder (25 → 10 s)`);
-  await p.getByRole('button', { name: 'Pause beenden' }).click();
-  ok(await p.evaluate(() => !document.querySelector('.restbar')), `${scheme}: Schließen entfernt die Pausen-Leiste`);
+  ok(/Übung 2 von 13/.test(t) && /Schulterdrücken/.test(t) && await p.evaluate(() => !document.querySelector('.restbar, .rt-time')), `${scheme}: nach „Weiter“ gleich die nächste Übung, keine Pausen-Leiste`);
   for (let i = 0; i < 5; i++) await p.getByRole('button', { name: 'Weiter', exact: true }).click();
-  await p.waitForTimeout(300);
+  await p.waitForTimeout(2300);
   t = await txt();
-  ok(/Übung 7 von 13/.test(t) && /Hüftkreisen/.test(t) && /von 1:00/.test(t) && /1:00/.test(t), `${scheme}: Hüftkreisen wartet während der Pause (Ring zeigt 1:00)`);
+  ok(/Übung 7 von 13/.test(t) && /Hüftkreisen/.test(t) && /von 1:00/.test(t) && /0:5[5-8]/.test(t), `${scheme}: Hüftkreisen zählt sofort herunter (1:00 → ${(t.match(/0:5\d/) || ['?'])[0]})`);
+  ok(/Zeit 0:0[3-9]|Zeit 0:[1-5]\d/.test(t), `${scheme}: Gesamtzeit läuft hoch`);
   if (shots) await p.screenshot({ path: `${shots}/mob-${scheme}-timer.png` });
-  await p.waitForTimeout(11600);
-  t = await txt();
-  ok(/Pause vorbei/.test(t) && /0:5[6-9]/.test(t), `${scheme}: Pause vorbei, danach läuft der 1:00-Zähler`);
-  await p.getByRole('button', { name: 'Pause beenden' }).click();
   await p.getByRole('button', { name: 'Pause', exact: true }).click();
   ok(/Weiter zählen/.test(await txt()), `${scheme}: Pause-Taste der Zeitübung funktioniert`);
   await p.getByRole('button', { name: 'Zurück', exact: true }).click();
-  ok(/Übung 6 von 13/.test(await txt()) && !(await p.evaluate(() => !!document.querySelector('.restbar'))), `${scheme}: Zurück ohne Pausen-Leiste`);
+  ok(/Übung 6 von 13/.test(await txt()), `${scheme}: Zurück zeigt die vorige Übung`);
   for (let i = 0; i < 8; i++) await p.getByRole("button", { name: /^(Weiter|Fertig)$/ }).click();
   t = await txt();
   ok(/Geschafft/.test(t) && !/Serie|Streak|Tage in Folge/i.test(t), `${scheme}: Ende ohne Streak-Druck`);
   if (shots) await p.screenshot({ path: `${shots}/mob-${scheme}-done.png` });
   await p.getByRole('button', { name: 'Fertig' }).click(); await p.waitForTimeout(250);
   ok(/Mobilitätsprogramm/.test(await txt()), `${scheme}: zurück zur Startseite`);
-  // gemerkte Pause: in der Leiste +15 → beim nächsten Start (auch nach Neuladen) läuft die Pause mit 25 s; Schließen ändert den Wert nicht
-  await p.getByRole('button', { name: 'Starten' }).click(); await p.waitForTimeout(250);
-  await p.getByRole('button', { name: 'Weiter', exact: true }).click(); await p.waitForTimeout(250);
-  await p.getByRole('button', { name: 'Pause 15 Sekunden länger' }).click();
-  await p.getByRole('button', { name: 'Pause beenden' }).click();
-  await p.getByRole('button', { name: 'Weiter', exact: true }).click(); await p.waitForTimeout(250);
-  ok(/0:2[0-5]/.test(await p.evaluate(() => document.querySelector('.rt-time').textContent)), `${scheme}: weitere Pausen im selben Ablauf nutzen die gemerkte Zeit (25 s)`);
-  await p.reload(); await p.waitForTimeout(250);
-  await p.getByRole('button', { name: 'Starten' }).click(); await p.waitForTimeout(250);
-  await p.getByRole('button', { name: 'Weiter', exact: true }).click(); await p.waitForTimeout(250);
-  ok(/0:2[0-5]/.test(await p.evaluate(() => document.querySelector('.rt-time').textContent)), `${scheme}: gemerkte Pause gilt beim nächsten Start nach Neuladen (25 s)`);
-  await p.getByRole('button', { name: 'Pause 15 Sekunden kürzer' }).click();
-  await p.reload(); await p.waitForTimeout(250);
   // Animationen: jede Übung mit Animation zeigt Figur und Kernpunkte (ohne Gewichte), die anderen nur Text.
   await p.getByRole('button', { name: 'Starten' }).click(); await p.waitForTimeout(250);
   const seen = [];

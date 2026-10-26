@@ -1,7 +1,7 @@
-// Mobilitäts-App: Startseite (Dauer einstellen, Übungen ansehen) und Ablauf (eine Übung pro Bildschirm).
+// Mobilitäts-App: Startseite (Übungen ansehen, Reihenfolge ändern) und Ablauf (eine Übung pro Bildschirm).
 import { PROGRAM, HINTS } from './data.js';
-import { steps, remainingSeconds, fmtClock, doseText, resolve, MIN_REST, MAX_REST, REST_ADJUST } from './routine.js';
-import { getRest, setRest } from './store.js';
+import { steps, fmtClock, doseText, resolve, orderProgram, moveRef } from './routine.js';
+import { getOrder, setOrder } from './store.js';
 import { animationCard } from './anim-view.js';
 
 const view = document.getElementById('view');
@@ -40,23 +40,33 @@ async function keepAwake(on) {
 document.addEventListener('visibilitychange', () => { if (run && document.visibilityState === 'visible') keepAwake(true); });
 
 // ---------- Startseite ----------
+const currentProgram = () => orderProgram(PROGRAM, getOrder());
+let editOrder = false;
+
 function homeView() {
-  const program = PROGRAM;
+  const program = currentProgram();
+  const refs = program.map((e) => e.ref);
+  const move = (i, d) => () => { setOrder(moveRef(refs, i, d)); render(); };
+  const arrow = (i, d, label) => h('button', { class: 'btn round sm', type: 'button', 'aria-label': `${label}: ${resolve(program[i]).name}`, disabled: d < 0 ? i === 0 : i === refs.length - 1, onclick: move(i, d) }, d < 0 ? '▲' : '▼');
+  const rows = program.map(resolve).map((x, i) => editOrder
+    ? h('div', { class: 'row' }, h('span', { class: 't' }, x.name), arrow(i, -1, 'Nach oben'), arrow(i, 1, 'Nach unten'))
+    : h('button', { class: 'row', type: 'button', 'aria-label': `${x.name}, Technik ansehen`, onclick: () => { location.hash = `#/ex/${i}`; } }, h('span', { class: 't' }, x.name), h('b', {}, doseText(x.dose)), h('span', { class: 'chev', 'aria-hidden': 'true' }, '›')));
   return h('section', {},
     h('h1', {}, 'Mobilität'),
     h('div', { class: 'card' },
       h('h2', {}, 'Mobilitätsprogramm'),
       h('p', { class: 'muted' }, `${program.length} Übungen`),
-      h('button', { class: 'btn primary block', type: 'button', onclick: () => startRun(program, getRest()) }, 'Starten')),
-    h('div', { class: 'sec' }, 'Übungen'),
-    h('div', { class: 'card list' }, program.map(resolve).map((x, i) => h('button', { class: 'row', type: 'button', 'aria-label': `${x.name}, Technik ansehen`, onclick: () => { location.hash = `#/ex/${i}`; } }, h('span', { class: 't' }, x.name), h('b', {}, doseText(x.dose)), h('span', { class: 'chev', 'aria-hidden': 'true' }, '›')))),
+      h('button', { class: 'btn primary block', type: 'button', onclick: () => startRun(program) }, 'Starten')),
+    h('div', { class: 'sec-row' }, h('div', { class: 'sec' }, 'Übungen'),
+      h('button', { class: 'btn small', type: 'button', onclick: () => { editOrder = !editOrder; render(); } }, editOrder ? 'Fertig' : 'Reihenfolge ändern')),
+    h('div', { class: 'card list' }, rows),
     h('div', { class: 'sec' }, 'Hinweise'),
     h('div', { class: 'card hints' }, HINTS.map((t) => h('p', {}, t))));
 }
 
 // ---------- Technik einer Übung (aus der Liste der Startseite) ----------
 function exerciseView(i) {
-  const list = PROGRAM.map(resolve).filter(Boolean);
+  const list = currentProgram().map(resolve).filter(Boolean);
   const x = list[i];
   if (!x) { setTimeout(() => { location.hash = '#/'; }, 0); return h('section', {}); }
   const go2 = (n) => () => { location.hash = `#/ex/${n}`; };
@@ -79,8 +89,8 @@ let run = null;
 let activeAnim = null;
 const stopAnim = () => { if (activeAnim) { activeAnim.stop(); activeAnim = null; } };
 
-function startRun(program, rest) {
-  run = { steps: steps(program, rest), index: 0, stepStart: Date.now(), pausedLeft: null, rest: null, done: false };
+function startRun(program) {
+  run = { steps: steps(program), index: 0, stepStart: Date.now(), startedAt: Date.now(), pausedLeft: null, done: false };
   keepAwake(true);
   location.hash = '#/run';
 }
@@ -92,26 +102,11 @@ function endRun() {
   location.hash = '#/';
 }
 
-// Laufende Pause (läuft neben der nächsten Übung, wie die Pausen-Leiste der Haupt-App): Sekunden bis zum Ende, negativ = darüber hinaus.
-const restLeft = () => (run.rest ? run.rest.seconds - (Date.now() - run.rest.start) / 1000 : null);
-const restActive = () => run.rest !== null && restLeft() > 0;
-
 function elapsed() {
   const st = run.steps[run.index];
   if (st.seconds === null) return 0;
-  if (run.rest && !run.rest.over) {
-    if (restLeft() > 0) return 0;              // Zeitübung wartet, bis die Pause vorbei ist
-    run.rest.over = true;
-    run.stepStart = run.rest.start + run.rest.seconds * 1000;
-  }
   if (run.pausedLeft !== null) return st.seconds - run.pausedLeft;
   return Math.max(0, Math.min(st.seconds, (Date.now() - run.stepStart) / 1000));
-}
-
-function closeRest() {
-  if (!run.rest) return;
-  if (!run.rest.over) run.stepStart = Math.min(Date.now(), run.rest.start + run.rest.seconds * 1000);
-  run.rest = null;
 }
 
 function go(delta) {
@@ -120,8 +115,6 @@ function go(delta) {
   run.index = Math.max(0, next);
   run.stepStart = Date.now();
   run.pausedLeft = null;
-  const before = run.steps[run.index].restBefore;
-  run.rest = delta > 0 && before > 0 ? { start: Date.now(), seconds: before, over: false } : null;
   render();
 }
 
@@ -134,48 +127,6 @@ function animBlock(item) {
     activeAnim = card;
     return h('div', { class: 'run-anim' }, card.el);
   } catch (e) { console.error(e); return null; }
-}
-
-// Pausen-Leiste wie in der Haupt-App: Ring, Restzeit, −15/+15, Schließen, „Als Nächstes“; nach der Pause leuchtet sie einmal sanft auf.
-const RING_LEN = 2 * Math.PI * 23;
-function restBar(st, onClose) {
-  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-  svg.setAttribute('viewBox', '0 0 54 54');
-  svg.setAttribute('class', 'rt-ring');
-  svg.setAttribute('aria-hidden', 'true');
-  svg.innerHTML = `<circle cx="27" cy="27" r="23" class="rt-ring-bg"/><circle cx="27" cy="27" r="23" class="rt-ring-fg" stroke-dasharray="${RING_LEN}" stroke-dashoffset="${RING_LEN}" transform="rotate(-90 27 27)"/>`;
-  const adjust = (sign) => () => {
-    run.rest.seconds = Math.max(0, run.rest.seconds + sign * REST_ADJUST);
-    // Die App merkt sich die eingestellte Zeit: gilt für die weiteren Pausen dieses Ablaufs und für den nächsten Start.
-    const kept = Math.max(MIN_REST, Math.min(MAX_REST, run.rest.seconds));
-    setRest(kept);
-    run.steps.forEach((x, i) => { if (i > run.index) x.restBefore = kept; });
-    draw();
-  };
-  const time = h('b', { class: 'rt-time' });
-  const sub = h('small', { class: 'rt-sub' });
-  const adjBtns = [
-    h('button', { class: 'rt-btn rt-adj', type: 'button', 'aria-label': 'Pause 15 Sekunden kürzer', onclick: adjust(-1) }, '−15'),
-    h('button', { class: 'rt-btn rt-adj', type: 'button', 'aria-label': 'Pause 15 Sekunden länger', onclick: adjust(1) }, '+15')];
-  const bar = h('div', { class: 'restbar', role: 'timer', 'aria-live': 'off' },
-    svg, h('div', { class: 'rt-text' }, time, sub), adjBtns,
-    h('button', { class: 'rt-btn', type: 'button', 'aria-label': 'Pause beenden', onclick: onClose }, '✕'),
-    h('div', { class: 'rt-next' }, `Als Nächstes: ${st.item.name} · ${doseText(st.item.dose)}`));
-  let wasDone = false;
-  function draw() {
-    const left = restLeft();
-    const done = left <= 0;
-    bar.classList.toggle('done', done);
-    time.textContent = done ? 'Pause vorbei' : fmtClock(Math.ceil(left));
-    sub.textContent = done ? `+${fmtClock(-left)} über die Zeit` : 'Pause';
-    svg.querySelector('.rt-ring-fg').setAttribute('stroke-dashoffset', String(RING_LEN * (1 - Math.min(1, Math.max(0, 1 - left / Math.max(1, run.rest.seconds))))));
-    adjBtns.forEach((b) => { b.hidden = done; });
-    if (done && !wasDone) { bar.classList.remove('pulse'); void bar.offsetWidth; bar.classList.add('pulse'); }
-    wasDone = done;
-  }
-  bar.draw = draw;
-  draw();
-  return bar;
 }
 
 function runView() {
@@ -192,29 +143,22 @@ function runView() {
   const remain = h('span', {});
   const ringText = h('b', { class: 'ring-time' });
   const ring = st.seconds !== null ? h('div', { class: 'ring', role: 'timer', 'aria-label': 'Restzeit' }, h('div', { class: 'ring-in' }, ringText, h('small', { class: 'muted' }, `von ${fmtClock(st.seconds)}`))) : null;
-  const pause = st.seconds !== null ? h('button', { class: 'btn', type: 'button', hidden: restActive(), onclick: () => {
+  const pause = st.seconds !== null ? h('button', { class: 'btn', type: 'button', onclick: () => {
     if (run.pausedLeft === null) run.pausedLeft = Math.max(0, st.seconds - elapsed());
     else { run.stepStart = Date.now() - (st.seconds - run.pausedLeft) * 1000; run.pausedLeft = null; }
     render();
   } }, run.pausedLeft === null ? 'Pause' : 'Weiter zählen') : null;
 
-  let bar = null;
   const dock = h('div', { class: 'dock' });
-  const root = h('section', { class: `runner${run.rest ? ' has-rest' : ''}` });
-  if (run.rest) {
-    bar = restBar(st, () => { closeRest(); bar.remove(); bar = null; root.classList.remove('has-rest'); if (pause) pause.hidden = false; tick(); });
-    dock.append(bar);
-  }
+  const root = h('section', { class: 'runner' });
   const tick = () => {
     const el = elapsed();
-    const left = run.rest && !run.rest.over ? restLeft() : 0;
-    remain.textContent = `noch ${fmtClock(remainingSeconds(run.steps, run.index, el, left))}`;
-    if (bar) { bar.draw(); if (pause && !restActive()) pause.hidden = false; }
+    remain.textContent = `Zeit ${fmtClock((Date.now() - run.startedAt) / 1000)}`;   // zählt hoch: so lange läuft das Programm schon
     if (ring && st.seconds !== null) {
       const sLeft = Math.max(0, st.seconds - el);
       ring.style.setProperty('--p', `${Math.min(100, (el / st.seconds) * 100)}%`);
       ring.classList.toggle('done', sLeft <= 0 && el > 0);
-      ringText.textContent = restActive() ? fmtClock(st.seconds) : sLeft <= 0 ? 'Weiter' : fmtClock(Math.ceil(sLeft));
+      ringText.textContent = sLeft <= 0 ? 'Weiter' : fmtClock(Math.ceil(sLeft));
     }
   };
   tick();
