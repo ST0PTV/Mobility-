@@ -1,0 +1,9 @@
+{
+  "name": "mobilitaet",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "check": "node --check js/app.js && node --check js/data.js && node --check js/routine.js && node --check js/store.js && node --check sw.js",
+    "test": "node tests/routine.test.js"
+  }
+}
