@@ -10,7 +10,7 @@ export const STEP_MINUTES = 5;
 
 export function resolve(entry) {
   const ex = EXERCISES[entry.ref];
-  return ex ? { ref: entry.ref, name: ex.name, cue: ex.cue, gear: ex.gear || null, dose: { ...entry.dose } } : null;
+  return ex ? { ref: entry.ref, name: ex.name, cue: ex.cue, gear: ex.gear || null, anim: ex.anim || null, dose: { ...entry.dose } } : null;
 }
 
 export function itemSeconds(dose) {

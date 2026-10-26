@@ -2,6 +2,7 @@
 import { PROGRAM, BASE_MINUTES, HINTS } from './data.js';
 import { nextMinutes, minuteRange, restSeconds, steps, remainingSeconds, fmtClock, doseText, gearList, resolve } from './routine.js';
 import { getMinutes, setMinutes } from './store.js';
+import { animationCard } from './anim-view.js';
 
 const view = document.getElementById('view');
 const toastEl = document.getElementById('toast');
@@ -73,6 +74,8 @@ function homeView() {
 
 // ---------- Ablauf ----------
 let run = null;
+let activeAnim = null;
+const stopAnim = () => { if (activeAnim) { activeAnim.stop(); activeAnim = null; } };
 
 function startRun(program, minutes) {
   run = { steps: steps(program, minutes), index: 0, stepStart: Date.now(), pausedLeft: null, done: false };
@@ -81,6 +84,7 @@ function startRun(program, minutes) {
 }
 
 function endRun() {
+  stopAnim();
   run = null;
   keepAwake(false);
   location.hash = '#/';
@@ -102,7 +106,19 @@ function go(delta) {
   render();
 }
 
+// Technik-Animation der Haupt-App (Figur, Kernpunkte); ohne Animation für diese Übung bleibt nur der Hinweistext.
+function animBlock(item) {
+  if (!item.anim) return null;
+  try {
+    const card = animationCard(item.anim);
+    if (!card) return null;
+    activeAnim = card;
+    return h('div', { class: 'run-anim' }, card.el);
+  } catch (e) { console.error(e); return null; }
+}
+
 function runView() {
+  stopAnim();
   if (!run) { setTimeout(() => { location.hash = '#/'; }, 0); return h('section', {}, h('p', { class: 'muted' }, 'Kein Ablauf aktiv.')); }
   if (run.done) {
     return h('section', { class: 'done' },
@@ -151,6 +167,7 @@ function runView() {
         h('p', { class: 'muted' }, st.item.cue),
         st.seconds === null ? h('p', { class: 'run-dose' }, doseText(st.item.dose)) : null,
         ring, pause,
+        animBlock(st.item),
         st.seconds !== null ? h('p', { class: 'muted small' }, 'Kein Ton – nur Anzeige.') : null),
     h('div', { class: 'btn-row' },
       h('button', { class: 'btn', type: 'button', disabled: run.index === 0, onclick: () => go(-1) }, 'Zurück'),
@@ -162,6 +179,7 @@ function runView() {
 
 // ---------- Router ----------
 function render() {
+  if (location.hash !== '#/run') stopAnim();
   const node = location.hash === '#/run' ? runView() : homeView();
   view.replaceChildren(node);
   if (!(location.hash === '#/run')) view.scrollTop = 0;

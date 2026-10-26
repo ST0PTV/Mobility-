@@ -8,6 +8,11 @@ Alle Daten bleiben auf dem Gerät (einzige gespeicherte Einstellung: die Dauer, 
 - Kein Krafttraining, keine Statistik, kein Streak. Nur so weit bewegen, wie es angenehm ist.
 - Dauerangaben sind eine Konvention (3 s pro Wiederholung; Pause zwischen den Übungen = Wunschdauer minus Übungszeit, 5 bis 180 s), keine Messwerte.
 
+## Technik-Animationen
+Die Figur und die Bewegungsabläufe stammen aus dem Workout Tracker (dort gezeichnet, mit Quellen geprüft). Hier werden sie nur übernommen:
+`node tools/sync-anim.mjs <Pfad zum Workout-Tracker-Checkout>` kopiert die Engine und die gewählten Animationen (nach `anim` in `js/data.js`),
+blendet Hanteln aus und entfernt Kernpunkte, die nur Gewichte betreffen (`tools/mobility-adapt.js`). Die erzeugten Dateien nicht von Hand ändern.
+
 ## Entwickeln und prüfen
 ```
 npm run check    # Syntax
