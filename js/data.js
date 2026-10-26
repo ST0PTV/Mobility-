@@ -19,8 +19,8 @@ export const EXERCISES = {
 const R = (ref, reps = 20) => ({ ref, dose: { mode: 'reps', reps } });
 const T = (ref, seconds) => ({ ref, dose: { mode: 'time', seconds } });
 
-// Ausgangsprogramm: je 20 Wiederholungen, Hüftkreisen 1 min (zusammen rund 15 min).
-export const BASE_MINUTES = 15;
+// Ausgangsprogramm: je 20 Wiederholungen, Hüftkreisen 1 min; Standardpause 10 s (zusammen rund 15 min).
+export const BASE_REST = 10;
 export const PROGRAM = [
   R('biceps-curl'), R('shoulder-press'), R('lateral-raise'), R('chair-squat'), R('lunge'), R('crunch'), T('hip-circles', 60),
   R('calf-raise'), R('triceps-back'), R('door-push-up'), R('wrist-curl'), R('reverse-wrist-curl'), R('front-raise')

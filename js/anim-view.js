@@ -240,8 +240,7 @@ export function animationCard(ref, { onKeyPoint = null } = {}) {
   const card = h('div', { class: 'anim-card' },
     h('div', { class: 'anim-top' }, badge, seg),
     stage,
-    list,
-    h('p', { class: 'muted small' }, 'Mittelwerte aus kleinen Studien – Orientierung, keine Vorgabe.'));
+    list);
   setViewBox();
   draw(0);
   if (st.playing) { st.playing = false; play(); } else pause();
